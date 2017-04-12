@@ -588,22 +588,7 @@ M_MoveFrame(edict_t *self)
 void
 monster_think(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	M_MoveFrame(self);
-
-	if (self->linkcount != self->monsterinfo.linkcount)
-	{
-		self->monsterinfo.linkcount = self->linkcount;
-		M_CheckGround(self);
-	}
-
-	M_CatagorizePosition(self);
-	M_WorldEffects(self);
-	M_SetEffects(self);
 }
 
 /*
@@ -613,101 +598,25 @@ monster_think(edict_t *self)
 void
 monster_use(edict_t *self, edict_t *other /* unused */, edict_t *activator)
 {
-	if (!self || !activator)
-	{
-		return;
-	}
 
-	if (self->enemy)
-	{
-		return;
-	}
-
-	if (self->health <= 0)
-	{
-		return;
-	}
-
-	if (activator->flags & FL_NOTARGET)
-	{
-		return;
-	}
-
-	if (!(activator->client) && !(activator->monsterinfo.aiflags & AI_GOOD_GUY))
-	{
-		return;
-	}
-
-	/* delay reaction so if the monster is
-	   teleported, its sound is still heard */
-	self->enemy = activator;
-	FoundTarget(self);
 }
 
 void
 monster_triggered_spawn(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	self->s.origin[2] += 1;
-	KillBox(self);
-
-	self->solid = SOLID_BBOX;
-	self->movetype = MOVETYPE_STEP;
-	self->svflags &= ~SVF_NOCLIENT;
-	self->air_finished = level.time + 12;
-	gi.linkentity(self);
-
-	monster_start_go(self);
-
-	if (self->enemy && !(self->spawnflags & 1) &&
-		!(self->enemy->flags & FL_NOTARGET))
-	{
-		FoundTarget(self);
-	}
-	else
-	{
-		self->enemy = NULL;
-	}
 }
 
 void
 monster_triggered_spawn_use(edict_t *self, edict_t *other /* unused */, edict_t *activator)
 {
-	if (!self || !activator)
-	{
-		return;
-	}
 
-	/* we have a one frame delay here so we
-	   don't telefrag the guy who activated us */
-	self->think = monster_triggered_spawn;
-	self->nextthink = level.time + FRAMETIME;
-
-	if (activator->client)
-	{
-		self->enemy = activator;
-	}
-
-	self->use = monster_use;
 }
 
 void
 monster_triggered_start(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	self->solid = SOLID_NOT;
-	self->movetype = MOVETYPE_NONE;
-	self->svflags |= SVF_NOCLIENT;
-	self->nextthink = 0;
-	self->use = monster_triggered_spawn_use;
 }
 
 /*
@@ -717,31 +626,7 @@ monster_triggered_start(edict_t *self)
 void
 monster_death_use(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	self->flags &= ~(FL_FLY | FL_SWIM);
-	self->monsterinfo.aiflags &= AI_GOOD_GUY;
-
-	if (self->item)
-	{
-		Drop_Item(self, self->item);
-		self->item = NULL;
-	}
-
-	if (self->deathtarget)
-	{
-		self->target = self->deathtarget;
-	}
-
-	if (!self->target)
-	{
-		return;
-	}
-
-	G_UseTargets(self, self->enemy);
 }
 
 /* ================================================================== */
@@ -749,305 +634,46 @@ monster_death_use(edict_t *self)
 qboolean
 monster_start(edict_t *self)
 {
-	if (!self)
-	{
-		return false;
-	}
-
-	if (deathmatch->value)
-	{
-		G_FreeEdict(self);
-		return false;
-	}
-
-	if ((self->spawnflags & 4) && !(self->monsterinfo.aiflags & AI_GOOD_GUY))
-	{
-		self->spawnflags &= ~4;
-		self->spawnflags |= 1;
-	}
-
-	if (!(self->monsterinfo.aiflags & AI_GOOD_GUY))
-	{
-		level.total_monsters++;
-	}
-
-	self->nextthink = level.time + FRAMETIME;
-	self->svflags |= SVF_MONSTER;
-	self->s.renderfx |= RF_FRAMELERP;
-	self->takedamage = DAMAGE_AIM;
-	self->air_finished = level.time + 12;
-	self->use = monster_use;
-
-	if(!self->max_health)
-	{
-		self->max_health = self->health;
-	}
-
-	self->clipmask = MASK_MONSTERSOLID;
-
-	self->s.skinnum = 0;
-	self->deadflag = DEAD_NO;
-	self->svflags &= ~SVF_DEADMONSTER;
-
-	if (!self->monsterinfo.checkattack)
-	{
-		self->monsterinfo.checkattack = M_CheckAttack;
-	}
-
-	VectorCopy(self->s.origin, self->s.old_origin);
-
-	if (st.item)
-	{
-		self->item = FindItemByClassname(st.item);
-
-		if (!self->item)
-		{
-			gi.dprintf("%s at %s has bad item: %s\n", self->classname,
-					vtos(self->s.origin), st.item);
-		}
-	}
-
-	/* randomize what frame they start on */
-	if (self->monsterinfo.currentmove)
-	{
-		self->s.frame = self->monsterinfo.currentmove->firstframe +
-			(randk() % (self->monsterinfo.currentmove->lastframe -
-					   self->monsterinfo.currentmove->firstframe + 1));
-	}
-
-	return true;
+	return false;
 }
 
 void
 monster_start_go(edict_t *self)
 {
-	vec3_t v;
-
-	if (!self)
-	{
-		return;
-	}
-
-	if (self->health <= 0)
-	{
-		return;
-	}
-
-	/* check for target to combat_point and change to combattarget */
-	if (self->target)
-	{
-		qboolean notcombat;
-		qboolean fixup;
-		edict_t *target;
-
-		target = NULL;
-		notcombat = false;
-		fixup = false;
-
-		while ((target = G_Find(target, FOFS(targetname), self->target)) != NULL)
-		{
-			if (strcmp(target->classname, "point_combat") == 0)
-			{
-				self->combattarget = self->target;
-				fixup = true;
-			}
-			else
-			{
-				notcombat = true;
-			}
-		}
-
-		if (notcombat && self->combattarget)
-		{
-			gi.dprintf("%s at %s has target with mixed types\n",
-					self->classname, vtos(self->s.origin));
-		}
-
-		if (fixup)
-		{
-			self->target = NULL;
-		}
-	}
-
-	/* validate combattarget */
-	if (self->combattarget)
-	{
-		edict_t *target;
-
-		target = NULL;
-
-		while ((target = G_Find(target, FOFS(targetname),
-						self->combattarget)) != NULL)
-		{
-			if (strcmp(target->classname, "point_combat") != 0)
-			{
-				gi.dprintf( "%s at (%i %i %i) has a bad combattarget %s : %s at (%i %i %i)\n",
-						self->classname, (int)self->s.origin[0], (int)self->s.origin[1],
-						(int)self->s.origin[2], self->combattarget, target->classname,
-						(int)target->s.origin[0], (int)target->s.origin[1],
-						(int)target->s.origin[2]);
-			}
-		}
-	}
-
-	if (self->target)
-	{
-		self->goalentity = self->movetarget = G_PickTarget(self->target);
-
-		if (!self->movetarget)
-		{
-			gi.dprintf("%s can't find target %s at %s\n", self->classname,
-					self->target, vtos(self->s.origin));
-			self->target = NULL;
-			self->monsterinfo.pausetime = 100000000;
-			self->monsterinfo.stand(self);
-		}
-		else if (strcmp(self->movetarget->classname, "path_corner") == 0)
-		{
-			VectorSubtract(self->goalentity->s.origin, self->s.origin, v);
-			self->ideal_yaw = self->s.angles[YAW] = vectoyaw(v);
-			self->monsterinfo.walk(self);
-			self->target = NULL;
-		}
-		else
-		{
-			self->goalentity = self->movetarget = NULL;
-			self->monsterinfo.pausetime = 100000000;
-			self->monsterinfo.stand(self);
-		}
-	}
-	else
-	{
-		self->monsterinfo.pausetime = 100000000;
-		self->monsterinfo.stand(self);
-	}
-
-	self->think = monster_think;
-	self->nextthink = level.time + FRAMETIME;
 }
 
 void
 walkmonster_start_go(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	if (!(self->spawnflags & 2) && (level.time < 1))
-	{
-		M_droptofloor(self);
-
-		if (self->groundentity)
-		{
-			if (!M_walkmove(self, 0, 0))
-			{
-				gi.dprintf("%s in solid at %s\n", self->classname,
-						vtos(self->s.origin));
-			}
-		}
-	}
-
-	if (!self->yaw_speed)
-	{
-		self->yaw_speed = 20;
-	}
-
-	self->viewheight = 25;
-
-	monster_start_go(self);
-
-	if (self->spawnflags & 2)
-	{
-		monster_triggered_start(self);
-	}
 }
 
 void
 walkmonster_start(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	self->think = walkmonster_start_go;
-	monster_start(self);
 }
 
 void
 flymonster_start_go(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
-
-	if (!M_walkmove(self, 0, 0))
-	{
-		gi.dprintf("%s in solid at %s\n", self->classname, vtos(self->s.origin));
-	}
-
-	if (!self->yaw_speed)
-	{
-		self->yaw_speed = 10;
-	}
-
-	self->viewheight = 25;
-
-	monster_start_go(self);
-
-	if (self->spawnflags & 2)
-	{
-		monster_triggered_start(self);
-	}
+	
 }
 
 void
 flymonster_start(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	self->flags |= FL_FLY;
-	self->think = flymonster_start_go;
-	monster_start(self);
 }
 
 void
 swimmonster_start_go(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
-
-	if (!self->yaw_speed)
-	{
-		self->yaw_speed = 10;
-	}
-
-	self->viewheight = 10;
-
-	monster_start_go(self);
-
-	if (self->spawnflags & 2)
-	{
-		monster_triggered_start(self);
-	}
+	
 }
 
 void
 swimmonster_start(edict_t *self)
 {
-	if (!self)
-	{
-		return;
-	}
 
-	self->flags |= FL_SWIM;
-	self->think = swimmonster_start_go;
-	monster_start(self);
 }
