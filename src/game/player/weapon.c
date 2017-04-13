@@ -457,6 +457,81 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 /* SHOTGUN / SUPERSHOTGUN */
 
 void
+fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
+{
+	vec3_t from;
+	vec3_t end;
+	trace_t tr;
+	edict_t *ignore;
+	int mask;
+	qboolean water;
+
+	if (!self)
+	{
+		return;
+	}
+
+	VectorMA(start, 8192, aimdir, end);
+	VectorCopy(start, from);
+	ignore = self;
+	water = false;
+	mask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
+
+	while (ignore)
+	{
+		tr = gi.trace(from, NULL, NULL, end, ignore, mask);
+
+		if (tr.contents & (CONTENTS_SLIME | CONTENTS_LAVA))
+		{
+			mask &= ~(CONTENTS_SLIME | CONTENTS_LAVA);
+			water = true;
+		}
+		else
+		{
+			if ((tr.ent->svflags & SVF_MONSTER) || (tr.ent->client) ||
+				(tr.ent->solid == SOLID_BBOX))
+			{
+				ignore = tr.ent;
+			}
+			else
+			{
+				ignore = NULL;
+			}
+
+			if ((tr.ent != self) && (tr.ent->takedamage))
+			{
+				T_Damage(tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal,
+						damage, kick, 0, MOD_RAILGUN);
+			}
+			else
+			{
+				ignore = NULL;
+			}
+		}
+
+		VectorCopy(tr.endpos, from);
+	}
+
+	/* send gun puff / flash */
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_BFG_LASER);
+	gi.WritePosition(start);
+	gi.WritePosition(tr.endpos);
+	gi.multicast(self->s.origin, MULTICAST_PHS);
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_SCREEN_SPARKS);
+	gi.WritePosition(tr.endpos);
+	gi.WriteDir(tr.plane.normal);
+	gi.multicast(tr.endpos, MULTICAST_PVS);
+
+	if (self->client)
+	{
+		PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+	}
+}
+
+void
 weapon_shotgun_fire(edict_t *ent)
 {
 	vec3_t start;
