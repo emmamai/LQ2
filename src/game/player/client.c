@@ -750,7 +750,7 @@ TossClientWeapon(edict_t *self)
 		item = NULL;
 	}
 
-	if (item && (strcmp(item->pickup_name, "Blaster") == 0))
+	if (item && (strcmp(item->pickup_name, "Shotgun") == 0))
 	{
 		item = NULL;
 	}
@@ -987,7 +987,7 @@ InitClientPersistant(gclient_t *client)
 
 	memset(&client->pers, 0, sizeof(client->pers));
 
-	item = FindItem("Blaster");
+	item = FindItem("Shotgun");
 	client->pers.selected_item = ITEM_INDEX(item);
 	client->pers.inventory[client->pers.selected_item] = 1;
 
@@ -2499,15 +2499,6 @@ ClientBeginServerFrame(edict_t *ent)
 		}
 
 		return;
-	}
-
-	/* add player trail so monsters can follow */
-	if (!deathmatch->value)
-	{
-		if (!visible(ent, PlayerTrail_LastSpot()))
-		{
-			PlayerTrail_Add(ent->s.old_origin);
-		}
 	}
 
 	client->latched_buttons = 0;

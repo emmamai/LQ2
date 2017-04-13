@@ -32,11 +32,6 @@ typedef struct
 	void (*spawn)(edict_t *ent);
 } spawn_t;
 
-void SP_item_health(edict_t *self);
-void SP_item_health_small(edict_t *self);
-void SP_item_health_large(edict_t *self);
-void SP_item_health_mega(edict_t *self);
-
 void SP_info_player_start(edict_t *ent);
 void SP_info_player_deathmatch(edict_t *ent);
 void SP_info_player_coop(edict_t *ent);
@@ -114,22 +109,8 @@ void SP_misc_strogg_ship(edict_t *self);
 void SP_misc_teleporter(edict_t *self);
 void SP_misc_teleporter_dest(edict_t *self);
 void SP_misc_blackhole(edict_t *self);
-void SP_misc_eastertank(edict_t *self);
-void SP_misc_easterchick(edict_t *self);
-void SP_misc_easterchick2(edict_t *self);
-
-void SP_monster_commander_body(edict_t *self);
-
-void SP_turret_breach(edict_t *self);
-void SP_turret_base(edict_t *self);
-void SP_turret_driver(edict_t *self);
 
 spawn_t spawns[] = {
-	{"item_health", SP_item_health},
-	{"item_health_small", SP_item_health_small},
-	{"item_health_large", SP_item_health_large},
-	{"item_health_mega", SP_item_health_mega},
-
 	{"info_player_start", SP_info_player_start},
 	{"info_player_deathmatch", SP_info_player_deathmatch},
 	{"info_player_coop", SP_info_player_coop},
@@ -208,11 +189,6 @@ spawn_t spawns[] = {
 	{"misc_teleporter", SP_misc_teleporter},
 	{"misc_teleporter_dest", SP_misc_teleporter_dest},
 	{"misc_blackhole", SP_misc_blackhole},
-	{"misc_eastertank", SP_misc_eastertank},
-	{"misc_easterchick", SP_misc_easterchick},
-	{"misc_easterchick2", SP_misc_easterchick2},
-
-	{"monster_commander_body", SP_monster_commander_body},
 
 	{NULL, NULL}
 };
@@ -667,7 +643,6 @@ SpawnEntities(const char *mapname, char *entities, const char *spawnpoint)
 
 	G_FindTeams();
 
-	PlayerTrail_Init();
 }
 
 /* =================================================================== */
@@ -905,6 +880,7 @@ SP_worldspawn(edict_t *ent)
 	snd_fry = gi.soundindex("player/fry.wav"); /* standing in lava / slime */
 
 	PrecacheItem(FindItem("Blaster"));
+	PrecacheItem(FindItem("Shotgun"));
 
 	gi.soundindex("player/lava1.wav");
 	gi.soundindex("player/lava2.wav");

@@ -634,8 +634,6 @@ use_target_blaster(edict_t *self, edict_t *other /* unused */, edict_t *activato
 		return;
 	}
 
-	fire_blaster(self, self->s.origin, self->movedir, self->dmg,
-			self->speed, EF_BLASTER, MOD_TARGET_BLASTER);
 	gi.sound(self, CHAN_VOICE, self->noise_index, 1, ATTN_NORM, 0);
 }
 

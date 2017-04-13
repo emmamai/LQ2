@@ -652,8 +652,7 @@ void T_RadiusDamage(edict_t *inflictor, edict_t *attacker,
 void monster_fire_bullet(edict_t *self, vec3_t start, vec3_t dir, int damage,
 		int kick, int hspread, int vspread, int flashtype);
 void monster_fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir,
-		int damage, int kick, int hspread, int vspread, int count,
-		int flashtype);
+		int damage, int kick);
 void monster_fire_blaster(edict_t *self, vec3_t start, vec3_t dir,
 		int damage, int speed, int flashtype, int effect);
 void monster_fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir,
@@ -705,7 +704,7 @@ qboolean fire_hit(edict_t *self, vec3_t aim, int damage, int kick);
 void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 		int kick, int hspread, int vspread, int mod);
 void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-		int kick, int hspread, int vspread, int count, int mod);
+		int kick);
 void fire_blaster(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 		int speed, int effect, qboolean hyper);
 void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage,

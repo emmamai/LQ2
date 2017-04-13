@@ -425,42 +425,8 @@ G_SetStats(edict_t *ent)
 			ent->client->pers.inventory[ent->client->ammo_index];
 	}
 
-	/* armor */
-	power_armor_type = PowerArmorType(ent);
-
-	if (power_armor_type)
-	{
-		cells = ent->client->pers.inventory[ITEM_INDEX(FindItem("cells"))];
-
-		if (cells == 0)
-		{
-			/* ran out of cells for power armor */
-			ent->flags &= ~FL_POWER_ARMOR;
-			gi.sound(ent, CHAN_ITEM, gi.soundindex(
-							"misc/power2.wav"), 1, ATTN_NORM, 0);
-			power_armor_type = 0;
-		}
-	}
-
-	index = ArmorIndex(ent);
-
-	if (power_armor_type && (!index || (level.framenum & 8)))
-	{
-		/* flash between power armor and other armor icon */
-		ent->client->ps.stats[STAT_ARMOR_ICON] = gi.imageindex("i_powershield");
-		ent->client->ps.stats[STAT_ARMOR] = cells;
-	}
-	else if (index)
-	{
-		item = GetItemByIndex(index);
-		ent->client->ps.stats[STAT_ARMOR_ICON] = gi.imageindex(item->icon);
-		ent->client->ps.stats[STAT_ARMOR] = ent->client->pers.inventory[index];
-	}
-	else
-	{
-		ent->client->ps.stats[STAT_ARMOR_ICON] = 0;
-		ent->client->ps.stats[STAT_ARMOR] = 0;
-	}
+	ent->client->ps.stats[STAT_ARMOR_ICON] = 0;
+	ent->client->ps.stats[STAT_ARMOR] = 0;
 
 	/* pickup message */
 	if (level.time > ent->client->pickup_msg_time)
