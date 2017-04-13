@@ -138,55 +138,6 @@ SelectNextItem(edict_t *ent, int itflags)
 }
 
 void
-SelectPrevItem(edict_t *ent, int itflags)
-{
-	gclient_t *cl;
-	int i, index;
-	gitem_t *it;
-
-	if (!ent)
-	{
-		return;
-	}
-
-	cl = ent->client;
-
-	if (cl->chase_target)
-	{
-		ChasePrev(ent);
-		return;
-	}
-
-	/* scan for the next valid one */
-	for (i = 1; i <= MAX_ITEMS; i++)
-	{
-		index = (cl->pers.selected_item + MAX_ITEMS - i) % MAX_ITEMS;
-
-		if (!cl->pers.inventory[index])
-		{
-			continue;
-		}
-
-		it = &itemlist[index];
-
-		if (!it->use)
-		{
-			continue;
-		}
-
-		if (!(it->flags & itflags))
-		{
-			continue;
-		}
-
-		cl->pers.selected_item = index;
-		return;
-	}
-
-	cl->pers.selected_item = -1;
-}
-
-void
 ValidateSelectedItem(edict_t *ent)
 {
 	gclient_t *cl;
@@ -272,48 +223,7 @@ Cmd_Noclip_f(edict_t *ent)
 	}
 
 	gi.cprintf(ent, PRINT_HIGH, msg);
-}
-
-/*
- * Use an inventory item
- */
-void
-Cmd_Use_f(edict_t *ent)
-{
-	int index;
-	gitem_t *it;
-	char *s;
-
-	if (!ent)
-	{
-		return;
-	}
-
-	s = gi.args();
-	it = FindItem(s);
-
-	if (!it)
-	{
-		gi.cprintf(ent, PRINT_HIGH, "unknown item: %s\n", s);
-		return;
-	}
-
-	if (!it->use)
-	{
-		gi.cprintf(ent, PRINT_HIGH, "Item is not usable.\n");
-		return;
-	}
-
-	index = ITEM_INDEX(it);
-
-	if (!ent->client->pers.inventory[index])
-	{
-		gi.cprintf(ent, PRINT_HIGH, "Out of item: %s\n", s);
-		return;
-	}
-
-	it->use(ent, it);
-}
+} 
 
 void
 Cmd_Score_f(edict_t *ent)
@@ -326,11 +236,6 @@ Cmd_Score_f(edict_t *ent)
 	ent->client->showinventory = false;
 	ent->client->showhelp = false;
 
-	if (!deathmatch->value && !coop->value)
-	{
-		return;
-	}
-
 	if (ent->client->showscores)
 	{
 		ent->client->showscores = false;
@@ -340,121 +245,6 @@ Cmd_Score_f(edict_t *ent)
 	ent->client->showscores = true;
 	DeathmatchScoreboardMessage(ent, ent->enemy);
 	gi.unicast(ent, true);
-}
-
-void
-Cmd_Help_f(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	/* this is for backwards compatibility */
-	if (deathmatch->value)
-	{
-		Cmd_Score_f(ent);
-		return;
-	}
-
-	ent->client->showinventory = false;
-	ent->client->showscores = false;
-
-	if (ent->client->showhelp)
-	{
-		ent->client->showhelp = false;
-		return;
-	}
-
-	ent->client->showhelp = true;
-	ent->client->pers.helpchanged = 0;
-	HelpComputerMessage(ent);
-	gi.unicast(ent, true);
-}
-
-void
-Cmd_Inven_f(edict_t *ent)
-{
-	gclient_t *cl;
-
-	if (!ent)
-	{
-		return;
-	}
-
-	cl = ent->client;
-
-	cl->showscores = false;
-	cl->showhelp = false;
-
-	if (cl->showinventory)
-	{
-		cl->showinventory = false;
-		return;
-	}
-
-	cl->showinventory = true;
-
-	InventoryMessage(ent);
-	gi.unicast(ent, true);
-}
-
-void
-Cmd_InvUse_f(edict_t *ent)
-{
-	gitem_t *it;
-
-	if (!ent)
-	{
-		return;
-	}
-
-	ValidateSelectedItem(ent);
-
-	if (ent->client->pers.selected_item == -1)
-	{
-		gi.cprintf(ent, PRINT_HIGH, "No item to use.\n");
-		return;
-	}
-
-	it = &itemlist[ent->client->pers.selected_item];
-
-	if (!it->use)
-	{
-		gi.cprintf(ent, PRINT_HIGH, "Item is not usable.\n");
-		return;
-	}
-
-	it->use(ent, it);
-}
-
-void
-Cmd_InvDrop_f(edict_t *ent)
-{
-	gitem_t *it;
-
-	if (!ent)
-	{
-		return;
-	}
-
-	ValidateSelectedItem(ent);
-
-	if (ent->client->pers.selected_item == -1)
-	{
-		gi.cprintf(ent, PRINT_HIGH, "No item to drop.\n");
-		return;
-	}
-
-	it = &itemlist[ent->client->pers.selected_item];
-
-	if (!it->drop)
-	{
-		gi.cprintf(ent, PRINT_HIGH, "Item is not dropable.\n");
-		return;
-	}
-
-	it->drop(ent, it);
 }
 
 void
@@ -836,7 +626,7 @@ ClientCommand(edict_t *ent)
 
 	if (Q_stricmp(cmd, "help") == 0)
 	{
-		Cmd_Help_f(ent);
+		Cmd_Score_f(ent);
 		return;
 	}
 
@@ -845,53 +635,13 @@ ClientCommand(edict_t *ent)
 		return;
 	}
 
-	if (Q_stricmp(cmd, "use") == 0)
-	{
-		Cmd_Use_f(ent);
-	}
-	else if (Q_stricmp(cmd, "god") == 0)
+	if (Q_stricmp(cmd, "god") == 0)
 	{
 		Cmd_God_f(ent);
 	}
 	else if (Q_stricmp(cmd, "noclip") == 0)
 	{
 		Cmd_Noclip_f(ent);
-	}
-	else if (Q_stricmp(cmd, "inven") == 0)
-	{
-		Cmd_Inven_f(ent);
-	}
-	else if (Q_stricmp(cmd, "invnext") == 0)
-	{
-		SelectNextItem(ent, -1);
-	}
-	else if (Q_stricmp(cmd, "invprev") == 0)
-	{
-		SelectPrevItem(ent, -1);
-	}
-	else if (Q_stricmp(cmd, "invnextw") == 0)
-	{
-		SelectNextItem(ent, IT_WEAPON);
-	}
-	else if (Q_stricmp(cmd, "invprevw") == 0)
-	{
-		SelectPrevItem(ent, IT_WEAPON);
-	}
-	else if (Q_stricmp(cmd, "invnextp") == 0)
-	{
-		SelectNextItem(ent, IT_POWERUP);
-	}
-	else if (Q_stricmp(cmd, "invprevp") == 0)
-	{
-		SelectPrevItem(ent, IT_POWERUP);
-	}
-	else if (Q_stricmp(cmd, "invuse") == 0)
-	{
-		Cmd_InvUse_f(ent);
-	}
-	else if (Q_stricmp(cmd, "invdrop") == 0)
-	{
-		Cmd_InvDrop_f(ent);
 	}
 	else if (Q_stricmp(cmd, "kill") == 0)
 	{

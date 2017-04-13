@@ -954,7 +954,6 @@ P_WorldEffects(void)
 void
 G_SetClientEffects(edict_t *ent)
 {
-	int pa_type;
 	int remaining;
 
 	if (!ent)
@@ -968,31 +967,6 @@ G_SetClientEffects(edict_t *ent)
 	if ((ent->health <= 0) || level.intermissiontime)
 	{
 		return;
-	}
-
-	if (ent->powerarmor_time > level.time)
-	{
-		pa_type = PowerArmorType(ent);
-
-		if (pa_type == POWER_ARMOR_SCREEN)
-		{
-			ent->s.effects |= EF_POWERSCREEN;
-		}
-		else if (pa_type == POWER_ARMOR_SHIELD)
-		{
-			ent->s.effects |= EF_COLOR_SHELL;
-			ent->s.renderfx |= RF_SHELL_GREEN;
-		}
-	}
-
-	if (ent->client->quad_framenum > level.framenum)
-	{
-		remaining = ent->client->quad_framenum - level.framenum;
-
-		if ((remaining > 30) || (remaining & 4))
-		{
-			ent->s.effects |= EF_QUAD;
-		}
 	}
 
 	if (ent->client->invincible_framenum > level.framenum)
@@ -1072,14 +1046,6 @@ G_SetClientSound(edict_t *ent)
 	if (ent->waterlevel && (ent->watertype & (CONTENTS_LAVA | CONTENTS_SLIME)))
 	{
 		ent->s.sound = snd_fry;
-	}
-	else if (strcmp(weap, "weapon_railgun") == 0)
-	{
-		ent->s.sound = gi.soundindex("weapons/rg_hum.wav");
-	}
-	else if (strcmp(weap, "weapon_bfg") == 0)
-	{
-		ent->s.sound = gi.soundindex("weapons/bfg_hum.wav");
 	}
 	else if (ent->client->weapon_sound)
 	{

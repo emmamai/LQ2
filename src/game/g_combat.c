@@ -204,8 +204,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	gclient_t *client;
 	int take;
 	int save;
-	int asave;
-	int psave;
 	int te_sparks;
 
 	if (!targ || !inflictor || !attacker)
@@ -240,17 +238,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	meansOfDeath = mod;
 
-	/* easy mode takes half damage */
-	if ((skill->value == 0) && (deathmatch->value == 0) && targ->client)
-	{
-		damage *= 0.5;
-
-		if (!damage)
-		{
-			damage = 1;
-		}
-	}
-
 	client = targ->client;
 
 	if (dflags & DAMAGE_BULLET)
@@ -263,13 +250,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	}
 
 	VectorNormalize(dir);
-
-	/* bonus damage for suprising a monster */
-	if (!(dflags & DAMAGE_RADIUS) && (targ->svflags & SVF_MONSTER) &&
-		(attacker->client) && (!targ->enemy) && (targ->health > 0))
-	{
-		damage *= 2;
-	}
 
 	if (targ->flags & FL_NO_KNOCKBACK)
 	{
@@ -335,9 +315,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		take = 0;
 		save = damage;
 	}
-
-	/* treat cheat/powerup savings the same as armor */
-	asave += save;
 
 	/* team damage avoidance */
 	if (!(dflags & DAMAGE_NO_PROTECTION) && false)

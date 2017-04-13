@@ -83,52 +83,6 @@ SP_FixCoopSpots(edict_t *self)
 }
 
 /*
- * Some maps have no coop spawnpoints at
- * all. Add these by injecting entities
- * into the map where they should have
- * been
- */
-void
-SP_CreateCoopSpots(edict_t *self)
-{
-	edict_t *spot;
-
-	if (!self)
-	{
-		return;
-	}
-
-	if (Q_stricmp(level.mapname, "security") == 0)
-	{
-		spot = G_Spawn();
-		spot->classname = "info_player_coop";
-		spot->s.origin[0] = 188 - 64;
-		spot->s.origin[1] = -164;
-		spot->s.origin[2] = 80;
-		spot->targetname = "jail3";
-		spot->s.angles[1] = 90;
-
-		spot = G_Spawn();
-		spot->classname = "info_player_coop";
-		spot->s.origin[0] = 188 + 64;
-		spot->s.origin[1] = -164;
-		spot->s.origin[2] = 80;
-		spot->targetname = "jail3";
-		spot->s.angles[1] = 90;
-
-		spot = G_Spawn();
-		spot->classname = "info_player_coop";
-		spot->s.origin[0] = 188 + 128;
-		spot->s.origin[1] = -164;
-		spot->s.origin[2] = 80;
-		spot->targetname = "jail3";
-		spot->s.angles[1] = 90;
-
-		return;
-	}
-}
-
-/*
  * Some maps have no unnamed (e.g. generic)
  * info_player_start. This is no problem in
  * normal gameplay, but if the map is loaded
@@ -312,13 +266,6 @@ SP_info_player_start(edict_t *self)
 	{
 		return;
 	}
-
-	if (Q_stricmp(level.mapname, "security") == 0)
-	{
-		/* invoke one of our gross, ugly, disgusting hacks */
-		self->think = SP_CreateCoopSpots;
-		self->nextthink = level.time + FRAMETIME;
-	}
 }
 
 /*
@@ -340,49 +287,6 @@ SP_info_player_deathmatch(edict_t *self)
 	}
 
 	SP_misc_teleporter_dest(self);
-}
-
-/*
- * QUAKED info_player_coop (1 0 1) (-16 -16 -24) (16 16 32)
- * potential spawning position for coop games
- */
-void
-SP_info_player_coop(edict_t *self)
-{
-	if (!self)
-	{
-		return;
-	}
-
-	if (!coop->value)
-	{
-		G_FreeEdict(self);
-		return;
-	}
-
-	if ((Q_stricmp(level.mapname, "jail2") == 0) ||
-		(Q_stricmp(level.mapname, "jail4") == 0) ||
-		(Q_stricmp(level.mapname, "mintro") == 0) ||
-		(Q_stricmp(level.mapname, "mine1") == 0) ||
-		(Q_stricmp(level.mapname, "mine2") == 0) ||
-		(Q_stricmp(level.mapname, "mine3") == 0) ||
-		(Q_stricmp(level.mapname, "mine4") == 0) ||
-		(Q_stricmp(level.mapname, "lab") == 0) ||
-		(Q_stricmp(level.mapname, "boss1") == 0) ||
-		(Q_stricmp(level.mapname, "fact1") == 0) ||
-		(Q_stricmp(level.mapname, "fact3") == 0) ||
-		(Q_stricmp(level.mapname, "waste1") == 0) || /* really? */
-		(Q_stricmp(level.mapname, "biggun") == 0) ||
-		(Q_stricmp(level.mapname, "space") == 0) ||
-		(Q_stricmp(level.mapname, "command") == 0) ||
-		(Q_stricmp(level.mapname, "power2") == 0) ||
-		(Q_stricmp(level.mapname, "strike") == 0) ||
-		(Q_stricmp(level.mapname, "city2") == 0))
-	{
-		/* invoke one of our gross, ugly, disgusting hacks */
-		self->think = SP_FixCoopSpots;
-		self->nextthink = level.time + FRAMETIME;
-	}
 }
 
 /*
@@ -726,77 +630,6 @@ ClientObituary(edict_t *self, edict_t *inflictor /* unused */,
 }
 
 void
-TossClientWeapon(edict_t *self)
-{
-	gitem_t *item;
-	edict_t *drop;
-	qboolean quad;
-	float spread;
-
-	if (!self)
-	{
-		return;
-	}
-
-	if (!deathmatch->value)
-	{
-		return;
-	}
-
-	item = self->client->pers.weapon;
-
-	if (!self->client->pers.inventory[self->client->ammo_index])
-	{
-		item = NULL;
-	}
-
-	if (item && (strcmp(item->pickup_name, "Shotgun") == 0))
-	{
-		item = NULL;
-	}
-
-	if (!((int)(dmflags->value) & DF_QUAD_DROP))
-	{
-		quad = false;
-	}
-	else
-	{
-		quad = (self->client->quad_framenum > (level.framenum + 10));
-	}
-
-	if (item && quad)
-	{
-		spread = 22.5;
-	}
-	else
-	{
-		spread = 0.0;
-	}
-
-	if (item)
-	{
-		self->client->v_angle[YAW] -= spread;
-		drop = Drop_Item(self, item);
-		self->client->v_angle[YAW] += spread;
-		drop->spawnflags = DROPPED_PLAYER_ITEM;
-	}
-
-	if (quad)
-	{
-		self->client->v_angle[YAW] += spread;
-		drop = Drop_Item(self, FindItemByClassname("item_quad"));
-		self->client->v_angle[YAW] -= spread;
-		drop->spawnflags |= DROPPED_PLAYER_ITEM;
-
-		drop->touch = Touch_Item;
-		drop->nextthink = level.time +
-						  (self->client->quad_framenum -
-						   level.framenum) * FRAMETIME;
-		drop->think = G_FreeEdict;
-	}
-}
-
-void
 LookAtKiller(edict_t *self, edict_t *inflictor, edict_t *attacker)
 {
 	vec3_t dir;
@@ -878,25 +711,8 @@ player_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
 		LookAtKiller(self, inflictor, attacker);
 		self->client->ps.pmove.pm_type = PM_DEAD;
 		ClientObituary(self, inflictor, attacker);
-		TossClientWeapon(self);
 
-		if (deathmatch->value)
-		{
-			Cmd_Help_f(self); /* show scores */
-		}
-
-		/* clear inventory: this is kind of ugly, but
-		   it's how we want to handle keys in coop */
-		for (n = 0; n < game.num_items; n++)
-		{
-			if (coop->value && itemlist[n].flags & IT_KEY)
-			{
-				self->client->resp.coop_respawn.inventory[n] =
-					self->client->pers.inventory[n];
-			}
-
-			self->client->pers.inventory[n] = 0;
-		}
+		Cmd_Score_f(self); /* show scores */
 	}
 
 	/* remove powerups */
@@ -1240,61 +1056,6 @@ SelectDeathmatchSpawnPoint(void)
 	}
 }
 
-edict_t *
-SelectCoopSpawnPoint(edict_t *ent)
-{
-	int index;
-	edict_t *spot = NULL;
-	char *target;
-
-	if (!ent)
-	{
-		return NULL;
-	}
-
-	index = ent->client - game.clients;
-
-	/* player 0 starts in normal player spawn point */
-	if (!index)
-	{
-		return NULL;
-	}
-
-	spot = NULL;
-
-	/* assume there are four coop spots at each spawnpoint */
-	while (1)
-	{
-		spot = G_Find(spot, FOFS(classname), "info_player_coop");
-
-		if (!spot)
-		{
-			return NULL; /* we didn't have enough... */
-		}
-
-		target = spot->targetname;
-
-		if (!target)
-		{
-			target = "";
-		}
-
-		if (Q_stricmp(game.spawnpoint, target) == 0)
-		{
-			/* this is a coop spawn point
-			   for one of the clients here */
-			index--;
-
-			if (!index)
-			{
-				return spot; /* this is it */
-			}
-		}
-	}
-
-	return spot;
-}
-
 /*
  * Chooses a player start, deathmatch start, coop start, etc
  */
@@ -1312,14 +1073,7 @@ SelectSpawnPoint(edict_t *ent, vec3_t origin, vec3_t angles)
 		return;
 	}
 
-	if (deathmatch->value)
-	{
-		spot = SelectDeathmatchSpawnPoint();
-	}
-	else if (coop->value)
-	{
-		spot = SelectCoopSpawnPoint(ent);
-	}
+	spot = SelectDeathmatchSpawnPoint();
 
 	/* find a single player start spot */
 	if (!spot)
@@ -1353,44 +1107,6 @@ SelectSpawnPoint(edict_t *ent, vec3_t origin, vec3_t angles)
 			if (!spot)
 			{
 				gi.error("Couldn't find spawn point %s\n", game.spawnpoint);
-			}
-		}
-	}
-
-	/* If we are in coop and we didn't find a coop
-	   spawnpoint due to map bugs (not correctly
-	   connected or the map was loaded via console
-	   and thus no previously map is known to the
-	   client) use one in 550 units radius. */
-	if (coop->value)
-	{
-		index = ent->client - game.clients;
-
-		if (Q_stricmp(spot->classname, "info_player_start") == 0 && index != 0)
-		{
-			while(counter < 3)
-			{
-				coopspot = G_Find(coopspot, FOFS(classname), "info_player_coop");
-
-				if (!coopspot)
-				{
-					break;
-				}
-
-				VectorSubtract(coopspot->s.origin, spot->s.origin, d);
-
-				if ((VectorLength(d) < 550))
-				{
-					if (index == counter)
-					{
-						spot = coopspot;
-						break;
-					}
-					else
-					{
-						counter++;
-					}
-				}
 			}
 		}
 	}
