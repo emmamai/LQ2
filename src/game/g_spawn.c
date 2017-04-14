@@ -60,7 +60,6 @@ void SP_trigger_multiple(edict_t *ent);
 void SP_trigger_relay(edict_t *ent);
 void SP_trigger_push(edict_t *ent);
 void SP_trigger_hurt(edict_t *ent);
-void SP_trigger_key(edict_t *ent);
 void SP_trigger_counter(edict_t *ent);
 void SP_trigger_elevator(edict_t *ent);
 void SP_trigger_gravity(edict_t *ent);
@@ -74,7 +73,6 @@ void SP_target_secret(edict_t *ent);
 void SP_target_goal(edict_t *ent);
 void SP_target_splash(edict_t *ent);
 void SP_target_spawner(edict_t *ent);
-void SP_target_blaster(edict_t *ent);
 void SP_target_crosslevel_trigger(edict_t *ent);
 void SP_target_crosslevel_target(edict_t *ent);
 void SP_target_laser(edict_t *self);
@@ -92,7 +90,6 @@ void SP_light_mine2(edict_t *ent);
 void SP_info_null(edict_t *self);
 void SP_info_notnull(edict_t *self);
 void SP_path_corner(edict_t *self);
-void SP_point_combat(edict_t *self);
 
 void SP_misc_explobox(edict_t *self);
 void SP_misc_banner(edict_t *self);
@@ -136,7 +133,6 @@ spawn_t spawns[] = {
 	{"trigger_relay", SP_trigger_relay},
 	{"trigger_push", SP_trigger_push},
 	{"trigger_hurt", SP_trigger_hurt},
-	{"trigger_key", SP_trigger_key},
 	{"trigger_counter", SP_trigger_counter},
 	{"trigger_elevator", SP_trigger_elevator},
 	{"trigger_gravity", SP_trigger_gravity},
@@ -150,12 +146,10 @@ spawn_t spawns[] = {
 	{"target_goal", SP_target_goal},
 	{"target_splash", SP_target_splash},
 	{"target_spawner", SP_target_spawner},
-	{"target_blaster", SP_target_blaster},
 	{"target_crosslevel_trigger", SP_target_crosslevel_trigger},
 	{"target_crosslevel_target", SP_target_crosslevel_target},
 	{"target_laser", SP_target_laser},
 	{"target_lightramp", SP_target_lightramp},
-	{"target_earthquake", SP_target_earthquake},
 	{"target_character", SP_target_character},
 	{"target_string", SP_target_string},
 
@@ -169,17 +163,14 @@ spawn_t spawns[] = {
 	{"func_group", SP_info_null},
 	{"info_notnull", SP_info_notnull},
 	{"path_corner", SP_path_corner},
-	{"point_combat", SP_point_combat},
 
 	{"misc_banner", SP_misc_banner},
 	{"misc_satellite_dish", SP_misc_satellite_dish},
 	{"misc_gib_arm", SP_misc_gib_arm},
 	{"misc_gib_leg", SP_misc_gib_leg},
 	{"misc_gib_head", SP_misc_gib_head},
-	{"misc_deadsoldier", SP_misc_deadsoldier},
 	{"misc_teleporter", SP_misc_teleporter},
 	{"misc_teleporter_dest", SP_misc_teleporter_dest},
-	{"misc_blackhole", SP_misc_blackhole},
 
 	{NULL, NULL}
 };
@@ -192,8 +183,6 @@ void
 ED_CallSpawn(edict_t *ent)
 {
 	spawn_t *s;
-	gitem_t *item;
-	int i;
 
 	if (!ent)
 	{
@@ -205,22 +194,6 @@ ED_CallSpawn(edict_t *ent)
 		gi.dprintf("ED_CallSpawn: NULL classname\n");
 		G_FreeEdict(ent);
 		return;
-	}
-
-	/* check item spawn functions */
-	for (i = 0, item = itemlist; i < game.num_items; i++, item++)
-	{
-		if (!item->classname)
-		{
-			continue;
-		}
-
-		if (!strcmp(item->classname, ent->classname))
-		{
-			/* found it */
-			SpawnItem(ent, item);
-			return;
-		}
 	}
 
 	/* check normal spawn functions */
@@ -418,75 +391,6 @@ ED_ParseEdict(char *data, edict_t *ent)
 }
 
 /*
- * Chain together all entities with a matching team field.
- *
- * All but the first will have the FL_TEAMSLAVE flag set.
- * All but the last will have the teamchain field set to the next one
- */
-void
-G_FindTeams(void)
-{
-	edict_t *e, *e2, *chain;
-	int i, j;
-	int c, c2;
-
-	c = 0;
-	c2 = 0;
-
-	for (i = 1, e = g_edicts + i; i < globals.num_edicts; i++, e++)
-	{
-		if (!e->inuse)
-		{
-			continue;
-		}
-
-		if (!e->team)
-		{
-			continue;
-		}
-
-		if (e->flags & FL_TEAMSLAVE)
-		{
-			continue;
-		}
-
-		chain = e;
-		e->teammaster = e;
-		c++;
-		c2++;
-
-		for (j = i + 1, e2 = e + 1; j < globals.num_edicts; j++, e2++)
-		{
-			if (!e2->inuse)
-			{
-				continue;
-			}
-
-			if (!e2->team)
-			{
-				continue;
-			}
-
-			if (e2->flags & FL_TEAMSLAVE)
-			{
-				continue;
-			}
-
-			if (!strcmp(e->team, e2->team))
-			{
-				c2++;
-				chain->teamchain = e2;
-				e2->teammaster = e;
-				chain = e2;
-				e2->flags |= FL_TEAMSLAVE;
-			}
-		}
-	}
-
-	gi.dprintf("%i teams with %i entities.\n", c, c2);
-}
-
-/*
  * Creates a server's entity / program execution context by
  * parsing textual entity definitions out of an ent file.
  */
@@ -572,94 +476,12 @@ SpawnEntities(const char *mapname, char *entities, const char *spawnpoint)
 
 	gi.dprintf("%i entities inhibited.\n", inhibit);
 
-	G_FindTeams();
-
 }
 
 /* =================================================================== */
 
-char *single_statusbar =
-	"yb	-24 "
-
-/* health */
-	"xv	0 "
-	"hnum "
-	"xv	50 "
-	"pic 0 "
-
-/* ammo */
-	"if 2 "
-	"	xv	100 "
-	"	anum "
-	"	xv	150 "
-	"	pic 2 "
-	"endif "
-
-/* armor */
-	"if 4 "
-	"	xv	200 "
-	"	rnum "
-	"	xv	250 "
-	"	pic 4 "
-	"endif "
-
-/* selected item */
-	"if 6 "
-	"	xv	296 "
-	"	pic 6 "
-	"endif "
-
-	"yb	-50 "
-
-/* picked up item */
-	"if 7 "
-	"	xv	0 "
-	"	pic 7 "
-	"	xv	26 "
-	"	yb	-42 "
-	"	stat_string 8 "
-	"	yb	-50 "
-	"endif "
-
-/* timer */
-	"if 9 "
-	"	xv	262 "
-	"	num	2	10 "
-	"	xv	296 "
-	"	pic	9 "
-	"endif "
-
-/*  help / weapon icon */
-	"if 11 "
-	"	xv	148 "
-	"	pic	11 "
-	"endif "
-;
-
 char *dm_statusbar =
 	"yb	-24 "
-
-/* health */
-	"xv	0 "
-	"hnum "
-	"xv	50 "
-	"pic 0 "
-
-/* ammo */
-	"if 2 "
-	"	xv	100 "
-	"	anum "
-	"	xv	150 "
-	"	pic 2 "
-	"endif "
-
-/* armor */
-	"if 4 "
-	"	xv	200 "
-	"	rnum "
-	"	xv	250 "
-	"	pic 4 "
-	"endif "
 
 /* selected item */
 	"if 6 "
@@ -685,12 +507,6 @@ char *dm_statusbar =
 	"	num	2	10 "
 	"	xv	296 "
 	"	pic	9 "
-	"endif "
-
-/*  help / weapon icon */
-	"if 11 "
-	"	xv	148 "
-	"	pic	11 "
 	"endif "
 
 /*  frags */
@@ -781,23 +597,12 @@ SP_worldspawn(edict_t *ent)
 
 	gi.configstring(CS_MAXCLIENTS, va("%i", (int)(maxclients->value)));
 
-	/* status bar program */
-	if (deathmatch->value)
-	{
-		gi.configstring(CS_STATUSBAR, dm_statusbar);
-	}
-	else
-	{
-		gi.configstring(CS_STATUSBAR, single_statusbar);
-	}
+
+	gi.configstring(CS_STATUSBAR, dm_statusbar);
+
+
 
 	/* --------------- */
-
-	/* help icon for statusbar */
-	gi.imageindex("i_help");
-	level.pic_health = gi.imageindex("i_health");
-	gi.imageindex("help");
-	gi.imageindex("field_3");
 
 	if (!st.gravity)
 	{
@@ -810,7 +615,6 @@ SP_worldspawn(edict_t *ent)
 
 	snd_fry = gi.soundindex("player/fry.wav"); /* standing in lava / slime */
 
-	PrecacheItem(FindItem("Blaster"));
 	PrecacheItem(FindItem("Shotgun"));
 
 	gi.soundindex("player/lava1.wav");

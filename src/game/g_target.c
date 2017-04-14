@@ -176,28 +176,6 @@ SP_target_speaker(edict_t *ent)
 
 /* ========================================================== */
 
-void
-Use_Target_Help(edict_t *ent, edict_t *other /* unused */, edict_t *activator /* unused */)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	if (ent->spawnflags & 1)
-	{
-		Q_strlcpy(game.helpmessage1, ent->message, sizeof(game.helpmessage1));
-	}
-	else
-	{
-		Q_strlcpy(game.helpmessage2, ent->message, sizeof(game.helpmessage2));
-	}
-
-	game.helpchanged++;
-}
-
-/* ========================================================== */
-
 /*
  * QUAKED target_secret (1 0 1) (-8 -8 -8) (8 8 8)
  * Counts a secret found. These are single use targets.
@@ -574,52 +552,6 @@ SP_target_spawner(edict_t *self)
 		G_SetMovedir(self->s.angles, self->movedir);
 		VectorScale(self->movedir, self->speed, self->movedir);
 	}
-}
-
-/* ========================================================== */
-
-/*
- * QUAKED target_blaster (1 0 0) (-8 -8 -8) (8 8 8) NOTRAIL NOEFFECTS
- * Fires a blaster bolt in the set direction when triggered.
- *
- * dmg		default is 15
- * speed	default is 1000
- */
-
-void
-use_target_blaster(edict_t *self, edict_t *other /* unused */, edict_t *activator /* unused */)
-{
-	if (!self)
-	{
-		return;
-	}
-
-	gi.sound(self, CHAN_VOICE, self->noise_index, 1, ATTN_NORM, 0);
-}
-
-void
-SP_target_blaster(edict_t *self)
-{
-	if (!self)
-	{
-		return;
-	}
-
-	self->use = use_target_blaster;
-	G_SetMovedir(self->s.angles, self->movedir);
-	self->noise_index = gi.soundindex("weapons/laser2.wav");
-
-	if (!self->dmg)
-	{
-		self->dmg = 15;
-	}
-
-	if (!self->speed)
-	{
-		self->speed = 1000;
-	}
-
-	self->svflags = SVF_NOCLIENT;
 }
 
 /* ========================================================== */
@@ -1085,105 +1017,4 @@ SP_target_lightramp(edict_t *self)
 	self->movedir[1] = self->message[1] - 'a';
 	self->movedir[2] =
 		(self->movedir[1] - self->movedir[0]) / (self->speed / FRAMETIME);
-}
-
-/* ========================================================== */
-
-/*
- * QUAKED target_earthquake (1 0 0) (-8 -8 -8) (8 8 8)
- * When triggered, this initiates a level-wide earthquake.
- * All players and monsters are affected.
- *  "speed"		severity of the quake (default:200)
- *  "count"		duration of the quake (default:5)
- */
-void
-target_earthquake_think(edict_t *self)
-{
-	int i;
-	edict_t *e;
-
-	if (!self)
-	{
-		return;
-	}
-
-	if (self->last_move_time < level.time)
-	{
-		gi.positioned_sound(self->s.origin, self, CHAN_AUTO,
-				self->noise_index, 1.0, ATTN_NONE, 0);
-		self->last_move_time = level.time + 0.5;
-	}
-
-	for (i = 1, e = g_edicts + i; i < globals.num_edicts; i++, e++)
-	{
-		if (!e->inuse)
-		{
-			continue;
-		}
-
-		if (!e->client)
-		{
-			continue;
-		}
-
-		if (!e->groundentity)
-		{
-			continue;
-		}
-
-		e->groundentity = NULL;
-		e->velocity[0] += crandom() * 150;
-		e->velocity[1] += crandom() * 150;
-		e->velocity[2] = self->speed * (100.0 / e->mass);
-	}
-
-	if (level.time < self->timestamp)
-	{
-		self->nextthink = level.time + FRAMETIME;
-	}
-}
-
-void
-target_earthquake_use(edict_t *self, edict_t *other /* unused */, edict_t *activator)
-{
-	if (!self || !activator)
-	{
-		return;
-	}
-
-	self->timestamp = level.time + self->count;
-	self->nextthink = level.time + FRAMETIME;
-	self->activator = activator;
-	self->last_move_time = 0;
-}
-
-void
-SP_target_earthquake(edict_t *self)
-{
-	if (!self)
-	{
-		return;
-	}
-
-	if (!self->targetname)
-	{
-		gi.dprintf("untargeted %s at %s\n", self->classname,
-				vtos(self->s.origin));
-	}
-
-	if (!self->count)
-	{
-		self->count = 5;
-	}
-
-	if (!self->speed)
-	{
-		self->speed = 200;
-	}
-
-	self->svflags |= SVF_NOCLIENT;
-	self->think = target_earthquake_think;
-	self->use = target_earthquake_use;
-
-	self->noise_index = gi.soundindex("world/quake.wav");
 }

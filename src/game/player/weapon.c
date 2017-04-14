@@ -25,7 +25,7 @@
  */
 
 #include "../header/local.h"
-#include "../monster/misc/player.h"
+#include "player.h"
 
 #define FRAME_FIRE_FIRST (FRAME_ACTIVATE_LAST + 1)
 #define FRAME_IDLE_FIRST (FRAME_FIRE_LAST + 1)
@@ -382,7 +382,6 @@ fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 	trace_t tr;
 	edict_t *ignore;
 	int mask;
-	qboolean water;
 
 	if (!self)
 	{
@@ -392,7 +391,6 @@ fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 	VectorMA(start, 8192, aimdir, end);
 	VectorCopy(start, from);
 	ignore = self;
-	water = false;
 	mask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
 
 	while (ignore)
@@ -402,7 +400,6 @@ fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 		if (tr.contents & (CONTENTS_SLIME | CONTENTS_LAVA))
 		{
 			mask &= ~(CONTENTS_SLIME | CONTENTS_LAVA);
-			water = true;
 		}
 		else
 		{
@@ -455,8 +452,6 @@ weapon_shotgun_fire(edict_t *ent)
 	vec3_t start;
 	vec3_t forward, right;
 	vec3_t offset;
-	int damage = 4;
-	int kick = 8;
 
 	if (!ent)
 	{

@@ -25,11 +25,10 @@
  */
 
 #include "../header/local.h"
-#include "../monster/misc/player.h"
+#include "player.h"
 
 void ClientUserinfoChanged(edict_t *ent, char *userinfo);
 void SP_misc_teleporter_dest(edict_t *ent);
-void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
 
 /*
  * The ugly as hell coop spawnpoint fixup function.
@@ -1063,10 +1062,6 @@ void
 SelectSpawnPoint(edict_t *ent, vec3_t origin, vec3_t angles)
 {
 	edict_t *spot = NULL;
-	edict_t *coopspot = NULL;
-	int index;
-	int counter = 0;
-	vec3_t d;
 
 	if (!ent)
 	{
@@ -1387,8 +1382,6 @@ PutClientInServer(edict_t *ent)
 	{
 		resp = client->resp;
 		memcpy(userinfo, client->pers.userinfo, sizeof(userinfo));
-		resp.coop_respawn.game_helpchanged = client->pers.game_helpchanged;
-		resp.coop_respawn.helpchanged = client->pers.helpchanged;
 		client->pers = resp.coop_respawn;
 		ClientUserinfoChanged(ent, userinfo);
 

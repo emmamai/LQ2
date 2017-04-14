@@ -326,34 +326,11 @@ void
 G_SetStats(edict_t *ent)
 {
 	gitem_t *item;
-	int index, cells = 0;
-	int power_armor_type;
 
 	if (!ent)
 	{
 		return;
 	}
-
-	/* health */
-	ent->client->ps.stats[STAT_HEALTH_ICON] = level.pic_health;
-	ent->client->ps.stats[STAT_HEALTH] = ent->health;
-
-	/* ammo */
-	if (!ent->client->ammo_index)
-	{
-		ent->client->ps.stats[STAT_AMMO_ICON] = 0;
-		ent->client->ps.stats[STAT_AMMO] = 0;
-	}
-	else
-	{
-		item = &itemlist[ent->client->ammo_index];
-		ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex(item->icon);
-		ent->client->ps.stats[STAT_AMMO] =
-			ent->client->pers.inventory[ent->client->ammo_index];
-	}
-
-	ent->client->ps.stats[STAT_ARMOR_ICON] = 0;
-	ent->client->ps.stats[STAT_ARMOR] = 0;
 
 	/* pickup message */
 	if (level.time > ent->client->pickup_msg_time)

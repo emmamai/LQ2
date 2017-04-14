@@ -96,26 +96,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		return;
 	}
 
-	/* friendly fire avoidance if enabled you
-	   can't hurt teammates (but you can hurt
-	   yourself) knockback still occurs */
-	if ((targ != attacker) && ((deathmatch->value &&
-		  ((int)(dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS))) ||
-		 coop->value))
-	{
-		if (OnSameTeam(targ, attacker))
-		{
-			if ((int)(dmflags->value) & DF_NO_FRIENDLY_FIRE)
-			{
-				damage = 0;
-			}
-			else
-			{
-				mod |= MOD_FRIENDLY_FIRE;
-			}
-		}
-	}
-
 	meansOfDeath = mod;
 
 	client = targ->client;
@@ -193,16 +173,10 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		take = 0;
 	}
 
-	/* team damage avoidance */
-	if (!(dflags & DAMAGE_NO_PROTECTION) && false)
-	{
-		return;
-	}
-
 	/* do the damage */
 	if (take)
 	{
-		if ((targ->svflags & SVF_MONSTER) || (client))
+		if (client)
 		{
 			SpawnDamage(TE_BLOOD, point, normal);
 		}
@@ -215,7 +189,7 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 		if (targ->health <= 0)
 		{
-			if ((targ->svflags & SVF_MONSTER) || (client))
+			if (client)
 			{
 				targ->flags |= FL_NO_KNOCKBACK;
 			}
@@ -224,22 +198,8 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			return;
 		}
 	}
-
-	if (targ->svflags & SVF_MONSTER)
-	{
-
-		if (!(targ->monsterinfo.aiflags & AI_DUCKED) && (take))
-		{
-			targ->pain(targ, attacker, knockback, take);
-
-			/* nightmare mode monsters don't go into pain frames often */
-			if (skill->value == 3)
-			{
-				targ->pain_debounce_time = level.time + 5;
-			}
-		}
-	}
-	else if (client)
+	
+	if (client)
 	{
 		if (!(targ->flags & FL_GODMODE) && (take))
 		{

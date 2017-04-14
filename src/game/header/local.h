@@ -141,24 +141,6 @@ typedef enum
 #define AI_MEDIC 0x00002000
 #define AI_RESURRECTING 0x00004000
 
-/* monster attack state */
-#define AS_STRAIGHT 1
-#define AS_SLIDING 2
-#define AS_MELEE 3
-#define AS_MISSILE 4
-
-/* armor types */
-#define ARMOR_NONE 0
-#define ARMOR_JACKET 1
-#define ARMOR_COMBAT 2
-#define ARMOR_BODY 3
-#define ARMOR_SHARD 4
-
-/* power armor types */
-#define POWER_ARMOR_NONE 0
-#define POWER_ARMOR_SCREEN 1
-#define POWER_ARMOR_SHIELD 2
-
 /* handedness values */
 #define RIGHT_HANDED 0
 #define LEFT_HANDED 1
@@ -259,11 +241,6 @@ typedef struct gitem_s
    the server.ssv file for savegames */
 typedef struct
 {
-	char helpmessage1[512];
-	char helpmessage2[512];
-	int helpchanged; /* flash F1 icon if non 0, play sound
-					    and increment only if 1, 2, or 3 */
-
 	gclient_t *clients; /* [maxclients] */
 
 	/* can't store spawnpoint in level, because
@@ -821,9 +798,6 @@ typedef struct
 
 	int power_cubes; /* used for tracking the cubes in coop games */
 	int score; /* for calculating total unit score in coop games */
-
-	int game_helpchanged;
-	int helpchanged;
 
 	qboolean spectator; /* client is a spectator */
 } client_persistant_t;

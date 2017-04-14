@@ -25,7 +25,7 @@
  */
 
 #include "../header/local.h"
-#include "../monster/misc/player.h"
+#include "player.h"
 
 static edict_t *current_player;
 static gclient_t *current_client;
@@ -1012,35 +1012,9 @@ G_SetClientEvent(edict_t *ent)
 void
 G_SetClientSound(edict_t *ent)
 {
-	char *weap;
-
 	if (!ent)
 	{
 		return;
-	}
-
-	if (ent->client->pers.game_helpchanged != game.helpchanged)
-	{
-		ent->client->pers.game_helpchanged = game.helpchanged;
-		ent->client->pers.helpchanged = 1;
-	}
-
-	/* help beep (no more than three times) */
-	if (ent->client->pers.helpchanged &&
-		(ent->client->pers.helpchanged <= 3) && !(level.framenum & 63))
-	{
-		ent->client->pers.helpchanged++;
-		gi.sound(ent, CHAN_VOICE, gi.soundindex(
-						"misc/pc_up.wav"), 1, ATTN_STATIC, 0);
-	}
-
-	if (ent->client->pers.weapon)
-	{
-		weap = ent->client->pers.weapon->classname;
-	}
-	else
-	{
-		weap = "";
 	}
 
 	if (ent->waterlevel && (ent->watertype & (CONTENTS_LAVA | CONTENTS_SLIME)))
