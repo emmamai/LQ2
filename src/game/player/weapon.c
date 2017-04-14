@@ -74,15 +74,6 @@ PlayerNoise(edict_t *who, vec3_t where, int type)
 		return;
 	}
 
-	if (type == PNOISE_WEAPON)
-	{
-		if (who->client->silencer_shots)
-		{
-			who->client->silencer_shots--;
-			return;
-		}
-	}
-
 	if (deathmatch->value)
 	{
 		return;
@@ -189,12 +180,6 @@ ChangeWeapon(edict_t *ent)
 	}
 }
 
-void
-NoAmmoWeaponChange(edict_t *ent)
-{
-	ent->client->newweapon = FindItem("shotgun");
-}
-
 /*
  * Called by ClientBeginServerFrame and ClientThink
  */
@@ -218,57 +203,6 @@ Think_Weapon(edict_t *ent)
 	{
 		ent->client->pers.weapon->weaponthink(ent);
 	}
-}
-
-/*
- * Make the weapon ready if there is ammo
- */
-void
-Use_Weapon(edict_t *ent, gitem_t *item)
-{
-	int ammo_index;
-	gitem_t *ammo_item;
-
-	if (!ent || !item)
-	{
-		return;
-	}
-
-	/* see if we're already using it */
-	if (item == ent->client->pers.weapon)
-	{
-		return;
-	}
-
-	if (item->ammo && !g_select_empty->value && !(item->flags & IT_AMMO))
-	{
-		ammo_item = FindItem(item->ammo);
-		ammo_index = ITEM_INDEX(ammo_item);
-
-		if (!ent->client->pers.inventory[ammo_index])
-		{
-			gi.cprintf(ent, PRINT_HIGH, "No %s for %s.\n",
-					ammo_item->pickup_name, item->pickup_name);
-			return;
-		}
-
-		if (ent->client->pers.inventory[ammo_index] < item->quantity)
-		{
-			gi.cprintf(ent, PRINT_HIGH, "Not enough %s for %s.\n",
-					ammo_item->pickup_name, item->pickup_name);
-			return;
-		}
-	}
-
-	/* change to this weapon when down */
-	ent->client->newweapon = item;
-}
-
-void
-Drop_Weapon(edict_t *ent, gitem_t *item)
-{
-	gi.cprintf(ent, PRINT_HIGH, "Dropping stuff is meaningless here\n");
-	return;
 }
 
 /*
@@ -363,37 +297,21 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		{
 			ent->client->latched_buttons &= ~BUTTON_ATTACK;
 
-			if ((!ent->client->ammo_index) ||
-				(ent->client->pers.inventory[ent->client->ammo_index] >=
-				 ent->client->pers.weapon->quantity))
+			ent->client->ps.gunframe = FRAME_FIRE_FIRST;
+			ent->client->weaponstate = WEAPON_FIRING;
+
+			/* start the animation */
+			ent->client->anim_priority = ANIM_ATTACK;
+
+			if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
 			{
-				ent->client->ps.gunframe = FRAME_FIRE_FIRST;
-				ent->client->weaponstate = WEAPON_FIRING;
-
-				/* start the animation */
-				ent->client->anim_priority = ANIM_ATTACK;
-
-				if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
-				{
-					ent->s.frame = FRAME_crattak1 - 1;
-					ent->client->anim_end = FRAME_crattak9;
-				}
-				else
-				{
-					ent->s.frame = FRAME_attack1 - 1;
-					ent->client->anim_end = FRAME_attack8;
-				}
+				ent->s.frame = FRAME_crattak1 - 1;
+				ent->client->anim_end = FRAME_crattak9;
 			}
 			else
 			{
-				if (level.time >= ent->pain_debounce_time)
-				{
-					gi.sound(ent, CHAN_VOICE, gi.soundindex(
-								"weapons/noammo.wav"), 1, ATTN_NORM, 0);
-					ent->pain_debounce_time = level.time + 1;
-				}
-
-				NoAmmoWeaponChange(ent);
+				ent->s.frame = FRAME_attack1 - 1;
+				ent->client->anim_end = FRAME_attack8;
 			}
 		}
 		else

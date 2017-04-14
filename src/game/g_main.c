@@ -448,12 +448,6 @@ G_RunFrame(void)
 			(ent->groundentity->linkcount != ent->groundentity_linkcount))
 		{
 			ent->groundentity = NULL;
-
-			if (!(ent->flags & (FL_SWIM | FL_FLY)) &&
-				(ent->svflags & SVF_MONSTER))
-			{
-				M_CheckGround(ent);
-			}
 		}
 
 		if ((i > 0) && (i <= maxclients->value))

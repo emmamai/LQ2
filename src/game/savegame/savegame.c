@@ -755,7 +755,7 @@ ReadClient(FILE *f, gclient_t *client)
  * game. Saved informations are:
  * - cross level data
  * - client states
- * - help computer info
+ * - help computadore info
  */
 void
 WriteGame(const char *filename, qboolean autosave)

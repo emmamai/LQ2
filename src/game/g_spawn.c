@@ -78,7 +78,6 @@ void SP_target_blaster(edict_t *ent);
 void SP_target_crosslevel_trigger(edict_t *ent);
 void SP_target_crosslevel_target(edict_t *ent);
 void SP_target_laser(edict_t *self);
-void SP_target_help(edict_t *ent);
 void SP_target_lightramp(edict_t *self);
 void SP_target_earthquake(edict_t *ent);
 void SP_target_character(edict_t *ent);
@@ -102,9 +101,7 @@ void SP_misc_gib_arm(edict_t *self);
 void SP_misc_gib_leg(edict_t *self);
 void SP_misc_gib_head(edict_t *self);
 void SP_misc_deadsoldier(edict_t *self);
-void SP_misc_viper(edict_t *self);
-void SP_misc_viper_bomb(edict_t *self);
-void SP_misc_bigviper(edict_t *self);
+
 void SP_misc_strogg_ship(edict_t *self);
 void SP_misc_teleporter(edict_t *self);
 void SP_misc_teleporter_dest(edict_t *self);
@@ -157,7 +154,6 @@ spawn_t spawns[] = {
 	{"target_crosslevel_trigger", SP_target_crosslevel_trigger},
 	{"target_crosslevel_target", SP_target_crosslevel_target},
 	{"target_laser", SP_target_laser},
-	{"target_help", SP_target_help},
 	{"target_lightramp", SP_target_lightramp},
 	{"target_earthquake", SP_target_earthquake},
 	{"target_character", SP_target_character},
@@ -175,17 +171,12 @@ spawn_t spawns[] = {
 	{"path_corner", SP_path_corner},
 	{"point_combat", SP_point_combat},
 
-	{"misc_explobox", SP_misc_explobox},
 	{"misc_banner", SP_misc_banner},
 	{"misc_satellite_dish", SP_misc_satellite_dish},
 	{"misc_gib_arm", SP_misc_gib_arm},
 	{"misc_gib_leg", SP_misc_gib_leg},
 	{"misc_gib_head", SP_misc_gib_head},
 	{"misc_deadsoldier", SP_misc_deadsoldier},
-	{"misc_viper", SP_misc_viper},
-	{"misc_viper_bomb", SP_misc_viper_bomb},
-	{"misc_bigviper", SP_misc_bigviper},
-	{"misc_strogg_ship", SP_misc_strogg_ship},
 	{"misc_teleporter", SP_misc_teleporter},
 	{"misc_teleporter_dest", SP_misc_teleporter_dest},
 	{"misc_blackhole", SP_misc_blackhole},
@@ -507,7 +498,6 @@ SpawnEntities(const char *mapname, char *entities, const char *spawnpoint)
 	const char *com_token;
 	int i;
 	float skill_level;
-	static qboolean monster_count_city3 = false;
 
 	if (!mapname || !entities || !spawnpoint)
 	{
@@ -576,65 +566,6 @@ SpawnEntities(const char *mapname, char *entities, const char *spawnpoint)
 		}
 
 		entities = ED_ParseEdict(entities, ent);
-
-		/* yet another map hack */
-		if (!Q_stricmp(level.mapname, "command") &&
-			!Q_stricmp(ent->classname, "trigger_once") &&
-		   	!Q_stricmp(ent->model, "*27"))
-		{
-			ent->spawnflags &= ~SPAWNFLAG_NOT_HARD;
-		}
-
-		/*
-		 * The 'monsters' count in city3.bsp is wrong.
-		 * There're two monsters triggered in a hidden
-		 * and unreachable room next to the security
-		 * pass.
-		 *
-		 * We need to make sure that this hack is only
-		 * applied once!
-		 */
-		if(!Q_stricmp(level.mapname, "city3") && !monster_count_city3)
-		{
-			level.total_monsters = level.total_monsters - 2;
-			monster_count_city3 = true;
-		}
-
-		/* remove things (except the world) from
-		   different skill levels or deathmatch */
-		if (ent != g_edicts)
-		{
-			if (deathmatch->value)
-			{
-				if (ent->spawnflags & SPAWNFLAG_NOT_DEATHMATCH)
-				{
-					G_FreeEdict(ent);
-					inhibit++;
-					continue;
-				}
-			}
-			else
-			{
-				if (((skill->value == 0) &&
-					 (ent->spawnflags & SPAWNFLAG_NOT_EASY)) ||
-					((skill->value == 1) &&
-					 (ent->spawnflags & SPAWNFLAG_NOT_MEDIUM)) ||
-					(((skill->value == 2) ||
-					  (skill->value == 3)) &&
-					 (ent->spawnflags & SPAWNFLAG_NOT_HARD))
-					)
-				{
-					G_FreeEdict(ent);
-					inhibit++;
-					continue;
-				}
-			}
-
-			ent->spawnflags &=
-				~(SPAWNFLAG_NOT_EASY | SPAWNFLAG_NOT_MEDIUM |
-				  SPAWNFLAG_NOT_HARD |
-				  SPAWNFLAG_NOT_COOP | SPAWNFLAG_NOT_DEATHMATCH);
-		}
 
 		ED_CallSpawn(ent);
 	}

@@ -196,37 +196,6 @@ Use_Target_Help(edict_t *ent, edict_t *other /* unused */, edict_t *activator /*
 	game.helpchanged++;
 }
 
-/*
- * QUAKED target_help (1 0 1) (-16 -16 -24) (16 16 24) help1
- * When fired, the "message" key becomes the current personal computer string,
- * and the message light will be set on all clients status bars.
- */
-void
-SP_target_help(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	if (deathmatch->value)
-	{
-		/* auto-remove for deathmatch */
-		G_FreeEdict(ent);
-		return;
-	}
-
-	if (!ent->message)
-	{
-		gi.dprintf("%s with no message at %s\n", ent->classname,
-				vtos(ent->s.origin));
-		G_FreeEdict(ent);
-		return;
-	}
-
-	ent->use = Use_Target_Help;
-}
-
 /* ========================================================== */
 
 /*
@@ -360,9 +329,6 @@ target_explosion_explode(edict_t *self)
 	gi.WriteByte(TE_EXPLOSION1);
 	gi.WritePosition(self->s.origin);
 	gi.multicast(self->s.origin, MULTICAST_PHS);
-
-	T_RadiusDamage(self, self->activator, self->dmg, NULL,
-			self->dmg + 40, MOD_EXPLOSIVE);
 
 	save = self->delay;
 	self->delay = 0;
@@ -517,12 +483,6 @@ use_target_splash(edict_t *self, edict_t *other /* unused */, edict_t *activator
 	gi.WriteDir(self->movedir);
 	gi.WriteByte(self->sounds);
 	gi.multicast(self->s.origin, MULTICAST_PVS);
-
-	if (self->dmg)
-	{
-		T_RadiusDamage(self, activator, self->dmg, NULL,
-				self->dmg + 40, MOD_SPLASH);
-	}
 }
 
 void

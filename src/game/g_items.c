@@ -589,7 +589,7 @@ gitem_t itemlist[] = {
 	{
 		"weapon_shotgun",
 		NULL,
-		Use_Weapon,
+		NULL,
 		NULL,
 		Weapon_Shotgun,
 		"misc/w_pkup.wav",

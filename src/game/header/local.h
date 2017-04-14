@@ -854,8 +854,6 @@ struct gclient_s
 
 	qboolean showscores; /* set layout stat */
 	qboolean showinventory; /* set layout stat */
-	qboolean showhelp;
-	qboolean showhelpicon;
 
 	int ammo_index;
 
@@ -894,8 +892,6 @@ struct gclient_s
 	int old_waterlevel;
 	int breather_sound;
 
-	int machinegun_shots; /* for weapon raising */
-
 	/* animation vars */
 	int anim_end;
 	int anim_priority;
@@ -908,9 +904,6 @@ struct gclient_s
 	float breather_framenum;
 	float enviro_framenum;
 
-	qboolean grenade_blew_up;
-	float grenade_time;
-	int silencer_shots;
 	int weapon_sound;
 
 	float pickup_msg_time;

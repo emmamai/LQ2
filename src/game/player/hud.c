@@ -19,7 +19,7 @@
  *
  * =======================================================================
  *
- * HUD, deathmatch scoreboard, help computer and intermission stuff.
+ * HUD, deathmatch scoreboard, and intermission stuff.
  *
  * =======================================================================
  */
@@ -50,12 +50,7 @@ MoveClientToIntermission(edict_t *ent)
 	ent->client->ps.rdflags &= ~RDF_UNDERWATER;
 
 	/* clean up powerup info */
-	ent->client->quad_framenum = 0;
 	ent->client->invincible_framenum = 0;
-	ent->client->breather_framenum = 0;
-	ent->client->enviro_framenum = 0;
-	ent->client->grenade_blew_up = false;
-	ent->client->grenade_time = 0;
 
 	ent->viewheight = 0;
 	ent->s.modelindex = 0;
@@ -325,74 +320,6 @@ DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	gi.WriteString(string);
 }
 
-void
-HelpComputerMessage(edict_t *ent)
-{
-	char string[1024];
-	char *sk;
-
-	if (!ent)
-	{
-		return;
-	}
-
-	if (skill->value == 0)
-	{
-		sk = "easy";
-	}
-	else if (skill->value == 1)
-	{
-		sk = "medium";
-	}
-	else if (skill->value == 2)
-	{
-		sk = "hard";
-	}
-	else
-	{
-		sk = "hard+";
-	}
-
-	/* send the layout */
-	Com_sprintf(string, sizeof(string),
-			"xv 32 yv 8 picn help " /* background */
-			"xv 202 yv 12 string2 \"%s\" " /* skill */
-			"xv 0 yv 24 cstring2 \"%s\" " /* level name */
-			"xv 0 yv 54 cstring2 \"%s\" " /* help 1 */
-			"xv 0 yv 110 cstring2 \"%s\" " /* help 2 */
-			"xv 50 yv 164 string2 \" kills     goals    secrets\" "
-			"xv 50 yv 172 string2 \"%3i/%3i     %i/%i       %i/%i\" ",
-			sk,
-			level.level_name,
-			game.helpmessage1,
-			game.helpmessage2,
-			level.killed_monsters, level.total_monsters,
-			level.found_goals, level.total_goals,
-			level.found_secrets, level.total_secrets);
-
-	gi.WriteByte(svc_layout);
-	gi.WriteString(string);
-}
-
-void
-InventoryMessage(edict_t *ent)
-{
-        int i;
-
-        if (!ent)
-        {
-                return;
-        }
-
-        gi.WriteByte(svc_inventory);
-
-        for (i = 0; i < MAX_ITEMS; i++)
-        {
-                gi.WriteShort(ent->client->pers.inventory[i]);
-        }
-}
-
-
 /* ======================================================================= */
 
 void
@@ -498,7 +425,7 @@ G_SetStats(edict_t *ent)
 	}
 	else
 	{
-		if (ent->client->showscores || ent->client->showhelp)
+		if (ent->client->showscores)
 		{
 			ent->client->ps.stats[STAT_LAYOUTS] |= 1;
 		}
@@ -512,12 +439,8 @@ G_SetStats(edict_t *ent)
 	/* frags */
 	ent->client->ps.stats[STAT_FRAGS] = ent->client->resp.score;
 
-	/* help icon / current weapon if not shown */
-	if (ent->client->pers.helpchanged && (level.framenum & 8))
-	{
-		ent->client->ps.stats[STAT_HELPICON] = gi.imageindex("i_help");
-	}
-	else if (((ent->client->pers.hand == CENTER_HANDED) ||
+
+	if (((ent->client->pers.hand == CENTER_HANDED) ||
 			  (ent->client->ps.fov > 91)) &&
 			 ent->client->pers.weapon)
 	{

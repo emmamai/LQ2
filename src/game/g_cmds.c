@@ -234,7 +234,6 @@ Cmd_Score_f(edict_t *ent)
 	}
 
 	ent->client->showinventory = false;
-	ent->client->showhelp = false;
 
 	if (ent->client->showscores)
 	{
@@ -276,7 +275,6 @@ Cmd_PutAway_f(edict_t *ent)
 	}
 
 	ent->client->showscores = false;
-	ent->client->showhelp = false;
 	ent->client->showinventory = false;
 }
 
