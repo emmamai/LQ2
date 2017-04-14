@@ -564,7 +564,6 @@ GAME_OBJS_ = \
 	src/game/g_items.o \
 	src/game/g_main.o \
 	src/game/g_misc.o \
-	src/game/g_monster.o \
 	src/game/g_phys.o \
 	src/game/g_spawn.o \
 	src/game/g_svcmds.o \
