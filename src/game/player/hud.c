@@ -34,10 +34,7 @@ MoveClientToIntermission(edict_t *ent)
 		return;
 	}
 
-	if (deathmatch->value || coop->value)
-	{
-		ent->client->showscores = true;
-	}
+	ent->client->showscores = true;
 
 	VectorCopy(level.intermission_origin, ent->s.origin);
 	ent->client->ps.pmove.origin[0] = level.intermission_origin[0] * 8;
@@ -340,30 +337,12 @@ G_SetStats(edict_t *ent)
 	}
 
 	/* timers */
-	if (ent->client->quad_framenum > level.framenum)
-	{
-		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_quad");
-		ent->client->ps.stats[STAT_TIMER] =
-			(ent->client->quad_framenum - level.framenum) / 10;
-	}
-	else if (ent->client->invincible_framenum > level.framenum)
+	if (ent->client->invincible_framenum > level.framenum)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex(
 				"p_invulnerability");
 		ent->client->ps.stats[STAT_TIMER] =
 			(ent->client->invincible_framenum - level.framenum) / 10;
-	}
-	else if (ent->client->enviro_framenum > level.framenum)
-	{
-		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_envirosuit");
-		ent->client->ps.stats[STAT_TIMER] =
-			(ent->client->enviro_framenum - level.framenum) / 10;
-	}
-	else if (ent->client->breather_framenum > level.framenum)
-	{
-		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_rebreather");
-		ent->client->ps.stats[STAT_TIMER] =
-			(ent->client->breather_framenum - level.framenum) / 10;
 	}
 	else
 	{

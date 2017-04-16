@@ -26,36 +26,6 @@
 
 #include "header/local.h"
 
-
-void
-Killed(edict_t *targ, edict_t *inflictor, edict_t *attacker,
-		int damage, vec3_t point)
-{
-	if (!targ || !inflictor || !attacker)
-	{
-		return;
-	}
-
-	if (targ->health < -999)
-	{
-		targ->health = -999;
-	}
-
-	targ->enemy = attacker;
-
-	targ->die(targ, inflictor, attacker, damage, point);
-}
-
-void
-SpawnDamage(int type, vec3_t origin, vec3_t normal)
-{
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(type);
-	gi.WritePosition(origin);
-	gi.WriteDir(normal);
-	gi.multicast(origin, MULTICAST_PVS);
-}
-
 /*
  * targ			entity that is being damaged
  * inflictor	entity that is causing the damage
@@ -84,7 +54,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 {
 	gclient_t *client;
 	int take;
-	int te_sparks;
 
 	if (!targ || !inflictor || !attacker)
 	{
@@ -99,15 +68,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	meansOfDeath = mod;
 
 	client = targ->client;
-
-	if (dflags & DAMAGE_BULLET)
-	{
-		te_sparks = TE_BULLET_SPARKS;
-	}
-	else
-	{
-		te_sparks = TE_SPARKS;
-	}
 
 	VectorNormalize(dir);
 
@@ -156,7 +116,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	if ((targ->flags & FL_GODMODE) && !(dflags & DAMAGE_NO_PROTECTION))
 	{
 		take = 0;
-		SpawnDamage(te_sparks, point, normal);
 	}
 
 	/* check for invincibility */
@@ -176,15 +135,6 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	/* do the damage */
 	if (take)
 	{
-		if (client)
-		{
-			SpawnDamage(TE_BLOOD, point, normal);
-		}
-		else
-		{
-			SpawnDamage(te_sparks, point, normal);
-		}
-
 		targ->health = targ->health - take;
 
 		if (targ->health <= 0)
@@ -194,7 +144,14 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 				targ->flags |= FL_NO_KNOCKBACK;
 			}
 
-			Killed(targ, inflictor, attacker, take, point);
+			if (targ->health < -999)
+			{
+				targ->health = -999;
+			}
+
+			targ->enemy = attacker;
+
+			targ->die(targ, inflictor, attacker, damage, point);
 			return;
 		}
 	}

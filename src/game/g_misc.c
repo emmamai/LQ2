@@ -226,8 +226,7 @@ ThrowGib(edict_t *self, char *gibname, int damage, int type)
 
 	if (type == GIB_ORGANIC)
 	{
-		gib->movetype = MOVETYPE_TOSS;
-		gib->touch = gib_touch;
+		gib->movetype = MOVETYPE_BOUNCE;
 		vscale = 0.5;
 	}
 	else
@@ -250,58 +249,6 @@ ThrowGib(edict_t *self, char *gibname, int damage, int type)
 }
 
 void
-ThrowHead(edict_t *self, char *gibname, int damage, int type)
-{
-	vec3_t vd;
-	float vscale;
-
-	if (!self || !gibname)
-	{
-		return;
-	}
-
-	self->s.skinnum = 0;
-	self->s.frame = 0;
-	VectorClear(self->mins);
-	VectorClear(self->maxs);
-
-	self->s.modelindex2 = 0;
-	gi.setmodel(self, gibname);
-	self->solid = SOLID_BBOX;
-	self->s.effects |= EF_GIB;
-	self->s.effects &= ~EF_FLIES;
-	self->s.sound = 0;
-	self->flags |= FL_NO_KNOCKBACK;
-	self->svflags &= ~SVF_MONSTER;
-	self->takedamage = DAMAGE_YES;
-	self->targetname = NULL;
-	self->die = gib_die;
-
-	if (type == GIB_ORGANIC)
-	{
-		self->movetype = MOVETYPE_TOSS;
-		self->touch = gib_touch;
-		vscale = 0.5;
-	}
-	else
-	{
-		self->movetype = MOVETYPE_BOUNCE;
-		vscale = 1.0;
-	}
-
-	VelocityForDamage(damage, vd);
-	VectorMA(self->velocity, vscale, vd, self->velocity);
-	ClipGibVelocity(self);
-
-	self->avelocity[YAW] = crandom() * 600;
-
-	self->think = G_FreeEdict;
-	self->nextthink = level.time + 10 + random() * 10;
-
-	gi.linkentity(self);
-}
-
-void
 ThrowClientHead(edict_t *self, int damage)
 {
 	vec3_t vd;
@@ -312,20 +259,9 @@ ThrowClientHead(edict_t *self, int damage)
 		return;
 	}
 
-	if (randk() & 1)
-	{
-		gibname = "models/objects/gibs/head2/tris.md2";
-		self->s.skinnum = 1; /* second skin is player */
-	}
-	else
-	{
-		gibname = "models/objects/gibs/skull/tris.md2";
-		self->s.skinnum = 0;
-	}
-
 	self->s.origin[2] += 32;
 	self->s.frame = 0;
-	gi.setmodel(self, gibname);
+	gi.setmodel(self, "");
 	VectorSet(self->mins, -16, -16, 0);
 	VectorSet(self->maxs, 16, 16, 16);
 
@@ -505,23 +441,9 @@ path_corner_touch(edict_t *self, edict_t *other, cplane_t *plane /* unused */,
 
 	other->goalentity = other->movetarget = next;
 
-	if (self->wait)
-	{
-		other->monsterinfo.pausetime = level.time + self->wait;
-		other->monsterinfo.stand(other);
-		return;
-	}
+	VectorSubtract(other->goalentity->s.origin, other->s.origin, v);
+	other->ideal_yaw = vectoyaw(v);
 
-	if (!other->movetarget)
-	{
-		other->monsterinfo.pausetime = level.time + 100000000;
-		other->monsterinfo.stand(other);
-	}
-	else
-	{
-		VectorSubtract(other->goalentity->s.origin, other->s.origin, v);
-		other->ideal_yaw = vectoyaw(v);
-	}
 }
 
 void
@@ -1200,92 +1122,6 @@ SP_light_mine2(edict_t *ent)
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_BBOX;
 	ent->s.modelindex = gi.modelindex("models/objects/minelite/light2/tris.md2");
-	gi.linkentity(ent);
-}
-
-/* ===================================================== */
-
-/*
- * QUAKED misc_gib_arm (1 0 0) (-8 -8 -8) (8 8 8)
- * Intended for use with the target_spawner
- */
-void
-SP_misc_gib_arm(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	gi.setmodel(ent, "models/objects/gibs/arm/tris.md2");
-	ent->solid = SOLID_BBOX;
-	ent->s.effects |= EF_GIB;
-	ent->takedamage = DAMAGE_YES;
-	ent->die = gib_die;
-	ent->movetype = MOVETYPE_TOSS;
-	ent->svflags |= SVF_MONSTER;
-	ent->deadflag = DEAD_DEAD;
-	ent->avelocity[0] = random() * 200;
-	ent->avelocity[1] = random() * 200;
-	ent->avelocity[2] = random() * 200;
-	ent->think = G_FreeEdict;
-	ent->nextthink = level.time + 30;
-	gi.linkentity(ent);
-}
-
-/*
- * QUAKED misc_gib_leg (1 0 0) (-8 -8 -8) (8 8 8)
- * Intended for use with the target_spawner
- */
-void
-SP_misc_gib_leg(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	gi.setmodel(ent, "models/objects/gibs/leg/tris.md2");
-	ent->solid = SOLID_BBOX;
-	ent->s.effects |= EF_GIB;
-	ent->takedamage = DAMAGE_YES;
-	ent->die = gib_die;
-	ent->movetype = MOVETYPE_TOSS;
-	ent->svflags |= SVF_MONSTER;
-	ent->deadflag = DEAD_DEAD;
-	ent->avelocity[0] = random() * 200;
-	ent->avelocity[1] = random() * 200;
-	ent->avelocity[2] = random() * 200;
-	ent->think = G_FreeEdict;
-	ent->nextthink = level.time + 30;
-	gi.linkentity(ent);
-}
-
-/*
- * QUAKED misc_gib_head (1 0 0) (-8 -8 -8) (8 8 8)
- * Intended for use with the target_spawner
- */
-void
-SP_misc_gib_head(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	gi.setmodel(ent, "models/objects/gibs/head/tris.md2");
-	ent->solid = SOLID_BBOX;
-	ent->s.effects |= EF_GIB;
-	ent->takedamage = DAMAGE_YES;
-	ent->die = gib_die;
-	ent->movetype = MOVETYPE_TOSS;
-	ent->svflags |= SVF_MONSTER;
-	ent->deadflag = DEAD_DEAD;
-	ent->avelocity[0] = random() * 200;
-	ent->avelocity[1] = random() * 200;
-	ent->avelocity[2] = random() * 200;
-	ent->think = G_FreeEdict;
-	ent->nextthink = level.time + 30;
 	gi.linkentity(ent);
 }
 

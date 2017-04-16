@@ -347,12 +347,6 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		{
 			if (ent->client->ps.gunframe == fire_frames[n])
 			{
-				if (ent->client->quad_framenum > level.framenum)
-				{
-					gi.sound(ent, CHAN_ITEM, gi.soundindex(
-								"items/damage3.wav"), 1, ATTN_NORM, 0);
-				}
-
 				fire(ent);
 				break;
 			}
@@ -403,8 +397,7 @@ fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 		}
 		else
 		{
-			if ((tr.ent->svflags & SVF_MONSTER) || (tr.ent->client) ||
-				(tr.ent->solid == SOLID_BBOX))
+			if ((tr.ent->client) || (tr.ent->solid == SOLID_BBOX))
 			{
 				ignore = tr.ent;
 			}

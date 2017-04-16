@@ -338,11 +338,6 @@ CheckDMRules(void)
 		return;
 	}
 
-	if (!deathmatch->value)
-	{
-		return;
-	}
-
 	if (timelimit->value)
 	{
 		if (level.time >= timelimit->value * 60)

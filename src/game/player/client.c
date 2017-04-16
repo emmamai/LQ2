@@ -445,63 +445,17 @@ ClientObituary(edict_t *self, edict_t *inflictor /* unused */,
 
 		if (attacker == self)
 		{
-			switch (mod)
+			if (IsNeutral(self))
 			{
-				case MOD_HELD_GRENADE:
-					message = "tried to put the pin back in";
-					break;
-				case MOD_HG_SPLASH:
-				case MOD_G_SPLASH:
-
-					if (IsNeutral(self))
-					{
-						message = "tripped on its own grenade";
-					}
-					else if (IsFemale(self))
-					{
-						message = "tripped on her own grenade";
-					}
-					else
-					{
-						message = "tripped on his own grenade";
-					}
-
-					break;
-				case MOD_R_SPLASH:
-
-					if (IsNeutral(self))
-					{
-						message = "blew itself up";
-					}
-					else if (IsFemale(self))
-					{
-						message = "blew herself up";
-					}
-					else
-					{
-						message = "blew himself up";
-					}
-
-					break;
-				case MOD_BFG_BLAST:
-					message = "should have used a smaller gun";
-					break;
-				default:
-
-					if (IsNeutral(self))
-					{
-						message = "killed itself";
-					}
-					else if (IsFemale(self))
-					{
-						message = "killed herself";
-					}
-					else
-					{
-						message = "killed himself";
-					}
-
-					break;
+				message = "killed itself";
+			}
+			else if (IsFemale(self))
+			{
+				message = "killed herself";
+			}
+			else
+			{
+				message = "killed himself";
 			}
 		}
 
@@ -526,69 +480,8 @@ ClientObituary(edict_t *self, edict_t *inflictor /* unused */,
 		{
 			switch (mod)
 			{
-				case MOD_BLASTER:
-					message = "was blasted by";
-					break;
-				case MOD_SHOTGUN:
-					message = "was gunned down by";
-					break;
-				case MOD_SSHOTGUN:
-					message = "was blown away by";
-					message2 = "'s super shotgun";
-					break;
-				case MOD_MACHINEGUN:
-					message = "was machinegunned by";
-					break;
-				case MOD_CHAINGUN:
-					message = "was cut in half by";
-					message2 = "'s chaingun";
-					break;
-				case MOD_GRENADE:
-					message = "was popped by";
-					message2 = "'s grenade";
-					break;
-				case MOD_G_SPLASH:
-					message = "was shredded by";
-					message2 = "'s shrapnel";
-					break;
-				case MOD_ROCKET:
-					message = "ate";
-					message2 = "'s rocket";
-					break;
-				case MOD_R_SPLASH:
-					message = "almost dodged";
-					message2 = "'s rocket";
-					break;
-				case MOD_HYPERBLASTER:
-					message = "was melted by";
-					message2 = "'s hyperblaster";
-					break;
 				case MOD_RAILGUN:
 					message = "was railed by";
-					break;
-				case MOD_BFG_LASER:
-					message = "saw the pretty lights from";
-					message2 = "'s BFG";
-					break;
-				case MOD_BFG_BLAST:
-					message = "was disintegrated by";
-					message2 = "'s BFG blast";
-					break;
-				case MOD_BFG_EFFECT:
-					message = "couldn't hide from";
-					message2 = "'s BFG";
-					break;
-				case MOD_HANDGRENADE:
-					message = "caught";
-					message2 = "'s handgrenade";
-					break;
-				case MOD_HG_SPLASH:
-					message = "didn't see";
-					message2 = "'s handgrenade";
-					break;
-				case MOD_HELD_GRENADE:
-					message = "feels";
-					message2 = "'s pain";
 					break;
 				case MOD_TELEFRAG:
 					message = "tried to invade";
@@ -689,6 +582,12 @@ player_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
 
 	VectorClear(self->avelocity);
 
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(self->s.origin);
+	//gi.WriteDir(self->s.angles);
+	gi.multicast(self->s.origin, MULTICAST_PVS);
+
 	self->takedamage = DAMAGE_YES;
 	self->movetype = MOVETYPE_TOSS;
 
@@ -715,68 +614,21 @@ player_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
 	}
 
 	/* remove powerups */
-	self->client->quad_framenum = 0;
 	self->client->invincible_framenum = 0;
-	self->client->breather_framenum = 0;
-	self->client->enviro_framenum = 0;
-	self->flags &= ~FL_POWER_ARMOR;
 
-	if (self->health < -40)
+	/* gib */
+	gi.sound(self, CHAN_BODY, gi.soundindex(
+					"misc/udeath.wav"), 1, ATTN_NORM, 0);
+
+	for (n = 0; n < 12; n++)
 	{
-		/* gib */
-		gi.sound(self, CHAN_BODY, gi.soundindex(
-						"misc/udeath.wav"), 1, ATTN_NORM, 0);
-
-		for (n = 0; n < 4; n++)
-		{
-			ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2",
-					damage, GIB_ORGANIC);
-		}
-
-		ThrowClientHead(self, damage);
-
-		self->takedamage = DAMAGE_NO;
+		//ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2",
+		//		damage, GIB_ORGANIC);
 	}
-	else
-	{
-		/* normal death */
-		if (!self->deadflag)
-		{
-			static int i;
 
-			i = (i + 1) % 3;
+	ThrowClientHead(self, damage);
 
-			/* start a death animation */
-			self->client->anim_priority = ANIM_DEATH;
-
-			if (self->client->ps.pmove.pm_flags & PMF_DUCKED)
-			{
-				self->s.frame = FRAME_crdeath1 - 1;
-				self->client->anim_end = FRAME_crdeath5;
-			}
-			else
-			{
-				switch (i)
-				{
-					case 0:
-						self->s.frame = FRAME_death101 - 1;
-						self->client->anim_end = FRAME_death106;
-						break;
-					case 1:
-						self->s.frame = FRAME_death201 - 1;
-						self->client->anim_end = FRAME_death206;
-						break;
-					case 2:
-						self->s.frame = FRAME_death301 - 1;
-						self->client->anim_end = FRAME_death308;
-						break;
-				}
-			}
-
-			gi.sound(self, CHAN_VOICE, gi.soundindex(va("*death%i.wav",
-							(randk() % 4) + 1)), 1, ATTN_NORM, 0);
-		}
-	}
+	self->takedamage = DAMAGE_NO;
 
 	self->deadflag = DEAD_DEAD;
 
@@ -858,7 +710,7 @@ SaveClientData(void)
 		game.clients[i].pers.health = ent->health;
 		game.clients[i].pers.max_health = ent->max_health;
 		game.clients[i].pers.savedFlags =
-			(ent->flags & (FL_GODMODE | FL_NOTARGET | FL_POWER_ARMOR));
+			(ent->flags & (FL_GODMODE | FL_NOTARGET));
 
 		if (coop->value)
 		{
@@ -1147,12 +999,6 @@ body_die(edict_t *self, edict_t *inflictor /* unused */,
 	{
 		gi.sound(self, CHAN_BODY, gi.soundindex(
 						"misc/udeath.wav"), 1, ATTN_NORM, 0);
-
-		for (n = 0; n < 4; n++)
-		{
-			ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2",
-					damage, GIB_ORGANIC);
-		}
 
 		self->s.origin[2] -= 48;
 		ThrowClientHead(self, damage);
@@ -1491,6 +1337,10 @@ PutClientInServer(edict_t *ent)
 	ent->s.angles[ROLL] = 0;
 	VectorCopy(ent->s.angles, client->ps.viewangles);
 	VectorCopy(ent->s.angles, client->v_angle);
+
+	/* add spawn invuln */
+
+	client->invincible_framenum = level.framenum + 15;
 
 	/* spawn a spectator */
 	if (client->pers.spectator)

@@ -63,7 +63,6 @@ void SP_trigger_hurt(edict_t *ent);
 void SP_trigger_counter(edict_t *ent);
 void SP_trigger_elevator(edict_t *ent);
 void SP_trigger_gravity(edict_t *ent);
-void SP_trigger_monsterjump(edict_t *ent);
 
 void SP_target_temp_entity(edict_t *ent);
 void SP_target_speaker(edict_t *ent);
@@ -75,9 +74,7 @@ void SP_target_splash(edict_t *ent);
 void SP_target_spawner(edict_t *ent);
 void SP_target_crosslevel_trigger(edict_t *ent);
 void SP_target_crosslevel_target(edict_t *ent);
-void SP_target_laser(edict_t *self);
 void SP_target_lightramp(edict_t *self);
-void SP_target_earthquake(edict_t *ent);
 void SP_target_character(edict_t *ent);
 void SP_target_string(edict_t *ent);
 
@@ -91,18 +88,9 @@ void SP_info_null(edict_t *self);
 void SP_info_notnull(edict_t *self);
 void SP_path_corner(edict_t *self);
 
-void SP_misc_explobox(edict_t *self);
 void SP_misc_banner(edict_t *self);
-void SP_misc_satellite_dish(edict_t *self);
-void SP_misc_gib_arm(edict_t *self);
-void SP_misc_gib_leg(edict_t *self);
-void SP_misc_gib_head(edict_t *self);
-void SP_misc_deadsoldier(edict_t *self);
-
-void SP_misc_strogg_ship(edict_t *self);
 void SP_misc_teleporter(edict_t *self);
 void SP_misc_teleporter_dest(edict_t *self);
-void SP_misc_blackhole(edict_t *self);
 
 spawn_t spawns[] = {
 	{"info_player_start", SP_info_player_start},
@@ -136,7 +124,6 @@ spawn_t spawns[] = {
 	{"trigger_counter", SP_trigger_counter},
 	{"trigger_elevator", SP_trigger_elevator},
 	{"trigger_gravity", SP_trigger_gravity},
-	{"trigger_monsterjump", SP_trigger_monsterjump},
 
 	{"target_temp_entity", SP_target_temp_entity},
 	{"target_speaker", SP_target_speaker},
@@ -148,7 +135,6 @@ spawn_t spawns[] = {
 	{"target_spawner", SP_target_spawner},
 	{"target_crosslevel_trigger", SP_target_crosslevel_trigger},
 	{"target_crosslevel_target", SP_target_crosslevel_target},
-	{"target_laser", SP_target_laser},
 	{"target_lightramp", SP_target_lightramp},
 	{"target_character", SP_target_character},
 	{"target_string", SP_target_string},
@@ -165,10 +151,6 @@ spawn_t spawns[] = {
 	{"path_corner", SP_path_corner},
 
 	{"misc_banner", SP_misc_banner},
-	{"misc_satellite_dish", SP_misc_satellite_dish},
-	{"misc_gib_arm", SP_misc_gib_arm},
-	{"misc_gib_leg", SP_misc_gib_leg},
-	{"misc_gib_head", SP_misc_gib_head},
 	{"misc_teleporter", SP_misc_teleporter},
 	{"misc_teleporter_dest", SP_misc_teleporter_dest},
 

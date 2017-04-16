@@ -939,13 +939,6 @@ SV_Physics_Toss(edict_t *ent)
 
 	SV_CheckVelocity(ent);
 
-	/* add gravity */
-	if ((ent->movetype != MOVETYPE_FLY) &&
-		(ent->movetype != MOVETYPE_FLYMISSILE))
-	{
-		SV_AddGravity(ent);
-	}
-
 	/* move angles */
 	VectorMA(ent->s.angles, FRAMETIME, ent->avelocity, ent->s.angles);
 
@@ -1016,58 +1009,6 @@ SV_Physics_Toss(edict_t *ent)
 		gi.linkentity(slave);
 	}
 }
-
-/* ================================================================== */
-
-/* STEPPING MOVEMENT */
-
-/*
- * Monsters freefall when they don't have a ground
- * entity, otherwise all movement is done with
- * discrete steps.
- *
- * This is also used for objects that have become
- * still on the ground, but  will fall if the floor
- * is pulled out from under them.
- */
-void
-SV_AddRotationalFriction(edict_t *ent)
-{
-	int n;
-	float adjustment;
-
-	if (!ent)
-	{
-		return;
-	}
-
-	VectorMA(ent->s.angles, FRAMETIME, ent->avelocity, ent->s.angles);
-	adjustment = FRAMETIME * STOPSPEED * FRICTION;
-
-	for (n = 0; n < 3; n++)
-	{
-		if (ent->avelocity[n] > 0)
-		{
-			ent->avelocity[n] -= adjustment;
-
-			if (ent->avelocity[n] < 0)
-			{
-				ent->avelocity[n] = 0;
-			}
-		}
-		else
-		{
-			ent->avelocity[n] += adjustment;
-
-			if (ent->avelocity[n] > 0)
-			{
-				ent->avelocity[n] = 0;
-			}
-		}
-	}
-}
-
-/* ================================================================== */
 
 void
 G_RunEntity(edict_t *ent)
