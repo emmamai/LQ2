@@ -570,7 +570,6 @@ GAME_OBJS_ = \
 	src/game/g_target.o \
 	src/game/g_trigger.o \
 	src/game/g_utils.o \
-	src/game/monster/misc/move.o \
 	src/game/player/client.o \
 	src/game/player/hud.o \
 	src/game/player/view.o \
