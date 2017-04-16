@@ -546,19 +546,9 @@ G_FreeEdict(edict_t *ed)
 {
 	gi.unlinkentity(ed); /* unlink from world */
 
-	if (deathmatch->value || coop->value)
+	if ((ed - g_edicts) <= (maxclients->value + BODY_QUEUE_SIZE))
 	{
-		if ((ed - g_edicts) <= (maxclients->value + BODY_QUEUE_SIZE))
-		{
-			return;
-		}
-	}
-	else
-	{
-		if ((ed - g_edicts) <= maxclients->value)
-		{
-			return;
-		}
+		return;
 	}
 
 	memset(ed, 0, sizeof(*ed));

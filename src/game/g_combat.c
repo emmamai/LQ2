@@ -96,16 +96,7 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 				mass = targ->mass;
 			}
 
-			if (targ->client && (attacker == targ))
-			{
-				/* This allows rocket jumps */
-				VectorScale(dir, 1600.0 * (float)knockback / mass, kvel);
-			}
-			else
-			{
-				VectorScale(dir, 500.0 * (float)knockback / mass, kvel);
-			}
-
+			VectorScale(dir, 500.0 * (float)knockback / mass, kvel);
 			VectorAdd(targ->velocity, kvel, targ->velocity);
 		}
 	}

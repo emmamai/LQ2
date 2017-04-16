@@ -34,7 +34,6 @@ typedef struct
 
 void SP_info_player_start(edict_t *ent);
 void SP_info_player_deathmatch(edict_t *ent);
-void SP_info_player_coop(edict_t *ent);
 void SP_info_player_intermission(edict_t *ent);
 
 void SP_func_plat(edict_t *ent);
@@ -48,7 +47,6 @@ void SP_func_train(edict_t *ent);
 void SP_func_conveyor(edict_t *self);
 void SP_func_wall(edict_t *self);
 void SP_func_object(edict_t *self);
-void SP_func_explosive(edict_t *self);
 void SP_func_timer(edict_t *self);
 void SP_func_areaportal(edict_t *ent);
 void SP_func_clock(edict_t *ent);
@@ -74,7 +72,6 @@ void SP_target_splash(edict_t *ent);
 void SP_target_spawner(edict_t *ent);
 void SP_target_crosslevel_trigger(edict_t *ent);
 void SP_target_crosslevel_target(edict_t *ent);
-void SP_target_lightramp(edict_t *self);
 void SP_target_character(edict_t *ent);
 void SP_target_string(edict_t *ent);
 
@@ -95,7 +92,6 @@ void SP_misc_teleporter_dest(edict_t *self);
 spawn_t spawns[] = {
 	{"info_player_start", SP_info_player_start},
 	{"info_player_deathmatch", SP_info_player_deathmatch},
-	{"info_player_coop", SP_info_player_deathmatch},
 	{"info_player_intermission", SP_info_player_intermission},
 
 	{"func_plat", SP_func_plat},
@@ -112,7 +108,6 @@ spawn_t spawns[] = {
 	{"func_wall", SP_func_wall},
 	{"func_object", SP_func_object},
 	{"func_timer", SP_func_timer},
-	{"func_explosive", SP_func_explosive},
 	{"func_killbox", SP_func_killbox},
 
 	{"trigger_always", SP_trigger_always},
@@ -129,20 +124,16 @@ spawn_t spawns[] = {
 	{"target_speaker", SP_target_speaker},
 	{"target_explosion", SP_target_explosion},
 	{"target_changelevel", SP_target_changelevel},
-	{"target_secret", SP_target_secret},
-	{"target_goal", SP_target_goal},
 	{"target_splash", SP_target_splash},
 	{"target_spawner", SP_target_spawner},
 	{"target_crosslevel_trigger", SP_target_crosslevel_trigger},
 	{"target_crosslevel_target", SP_target_crosslevel_target},
-	{"target_lightramp", SP_target_lightramp},
 	{"target_character", SP_target_character},
 	{"target_string", SP_target_string},
 
 	{"worldspawn", SP_worldspawn},
 	{"viewthing", SP_viewthing},
 
-	{"light", SP_light},
 	{"light_mine1", SP_light_mine1},
 	{"light_mine2", SP_light_mine2},
 	{"info_null", SP_info_null},
@@ -538,9 +529,6 @@ SP_worldspawn(edict_t *ent)
 
 	/* --------------- */
 
-	/* reserve some spots for dead
-	   player bodies for coop / deathmatch */
-	InitBodyQue();
 
 	/* set configstrings for items */
 	SetItemNames();
@@ -630,22 +618,18 @@ SP_worldspawn(edict_t *ent)
 	gi.soundindex("*pain100_2.wav");
 
 	/* sexed models: THIS ORDER MUST MATCH THE DEFINES IN g_local.h
-	   you can add more, max 19 (pete change)these models are only
-	   loaded in coop or deathmatch. not singleplayer. */
-	if (coop->value || deathmatch->value)
-	{
-		gi.modelindex("#w_blaster.md2");
-		gi.modelindex("#w_shotgun.md2");
-		gi.modelindex("#w_sshotgun.md2");
-		gi.modelindex("#w_machinegun.md2");
-		gi.modelindex("#w_chaingun.md2");
-		gi.modelindex("#a_grenades.md2");
-		gi.modelindex("#w_glauncher.md2");
-		gi.modelindex("#w_rlauncher.md2");
-		gi.modelindex("#w_hyperblaster.md2");
-		gi.modelindex("#w_railgun.md2");
-		gi.modelindex("#w_bfg.md2");
-	}
+	   you can add more, max 19 */
+	gi.modelindex("#w_blaster.md2");
+	gi.modelindex("#w_shotgun.md2");
+	gi.modelindex("#w_sshotgun.md2");
+	gi.modelindex("#w_machinegun.md2");
+	gi.modelindex("#w_chaingun.md2");
+	gi.modelindex("#a_grenades.md2");
+	gi.modelindex("#w_glauncher.md2");
+	gi.modelindex("#w_rlauncher.md2");
+	gi.modelindex("#w_hyperblaster.md2");
+	gi.modelindex("#w_railgun.md2");
+	gi.modelindex("#w_bfg.md2");
 
 	/* ------------------- */
 
@@ -667,7 +651,6 @@ SP_worldspawn(edict_t *ent)
 	gi.soundindex("items/damage.wav");
 	gi.soundindex("items/protect.wav");
 	gi.soundindex("items/protect4.wav");
-	gi.soundindex("weapons/noammo.wav");
 
 	gi.soundindex("infantry/inflies1.wav");
 

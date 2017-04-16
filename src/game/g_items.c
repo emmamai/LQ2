@@ -88,16 +88,6 @@ PrecacheItem(gitem_t *it)
 		return;
 	}
 
-	if (it->pickup_sound)
-	{
-		gi.soundindex(it->pickup_sound);
-	}
-
-	if (it->world_model)
-	{
-		gi.modelindex(it->world_model);
-	}
-
 	if (it->view_model)
 	{
 		gi.modelindex(it->view_model);
@@ -175,14 +165,10 @@ gitem_t itemlist[] = {
 		NULL,
 		NULL,
 		Weapon_Shotgun,
-		"misc/w_pkup.wav",
-		"models/weapons/g_shotg/tris.md2", EF_ROTATE,
 		"models/weapons/v_shotg/tris.md2",
 		"w_shotgun",
 		"Shotgun",
 		0,
-		0,
-		"Shotgun",
 		IT_WEAPON | IT_STAY_COOP,
 		WEAP_SHOTGUN,
 		NULL,

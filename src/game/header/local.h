@@ -103,12 +103,6 @@ typedef enum
 #define DEAD_DEAD 2
 #define DEAD_RESPAWNABLE 3
 
-/* range */
-#define RANGE_MELEE 0
-#define RANGE_NEAR 1
-#define RANGE_MID 2
-#define RANGE_FAR 3
-
 /* gib types */
 #define GIB_ORGANIC 0
 #define GIB_METALLIC 1
@@ -128,11 +122,6 @@ typedef enum
 #define SFL_CROSS_TRIGGER_7 0x00000040
 #define SFL_CROSS_TRIGGER_8 0x00000080
 #define SFL_CROSS_TRIGGER_MASK 0x000000ff
-
-/* noise types for PlayerNoise */
-#define PNOISE_SELF 0
-#define PNOISE_WEAPON 1
-#define PNOISE_IMPACT 2
 
 /* edict->movetype values */
 typedef enum
@@ -186,18 +175,13 @@ typedef struct gitem_s
 	void (*use)(struct edict_s *ent, struct gitem_s *item);
 	void (*drop)(struct edict_s *ent, struct gitem_s *item);
 	void (*weaponthink)(struct edict_s *ent);
-	char *pickup_sound;
-	char *world_model;
-	int world_model_flags;
 	char *view_model;
-
+ 
 	/* client side info */
 	char *icon;
 	char *pickup_name; /* for printing on pickup */
 	int count_width; /* number of digits to display by icon */
 
-	int quantity; /* for ammo how much, for weapons how much is used per shot */
-	char *ammo; /* for weapons */
 	int flags; /* IT_* flags */
 
 	int weapmodel; /* weapon model index (for weapons) */
@@ -273,8 +257,6 @@ typedef struct
 
 	edict_t *current_entity; /* entity running from G_RunFrame */
 	int body_que; /* dead bodies */
-
-	int power_cubes; /* ugly necessity for coop */
 } level_locals_t;
 
 /* spawn_temp_t is only used to hold entity field values that
@@ -354,7 +336,6 @@ extern int lastgibframe;
 #define MOD_TELEFRAG 21
 #define MOD_FALLING 22
 #define MOD_SUICIDE 23
-#define MOD_HELD_GRENADE 24
 #define MOD_EXPLOSIVE 25
 #define MOD_BARREL 26
 #define MOD_BOMB 27
@@ -380,7 +361,6 @@ extern edict_t *g_edicts;
 
 extern cvar_t *maxentities;
 extern cvar_t *deathmatch;
-extern cvar_t *coop;
 extern cvar_t *dmflags;
 extern cvar_t *skill;
 extern cvar_t *fraglimit;
@@ -526,8 +506,6 @@ void T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 /* g_misc.c */
 void ThrowClientHead(edict_t *self, int damage);
-void ThrowGib(edict_t *self, char *gibname, int damage, int type);
-void ThrowDebris(edict_t *self, char *modelname, float speed, vec3_t origin);
 void BecomeExplosion1(edict_t *self);
 
 /* g_weapon.c */
@@ -561,9 +539,6 @@ void G_SetStats(edict_t *ent);
 void G_SetSpectatorStats(edict_t *ent);
 void G_CheckChaseStats(edict_t *ent);
 void DeathmatchScoreboardMessage(edict_t *client, edict_t *killer);
-
-/* g_pweapon.c */
-void PlayerNoise(edict_t *who, vec3_t where, int type);
 
 /* g_phys.c */
 void G_RunEntity(edict_t *ent);
@@ -608,19 +583,8 @@ typedef struct
 	int selected_item;
 	int inventory[MAX_ITEMS];
 
-	/* ammo capacities */
-	int max_bullets;
-	int max_shells;
-	int max_rockets;
-	int max_grenades;
-	int max_cells;
-	int max_slugs;
-
 	gitem_t *weapon;
 	gitem_t *lastweapon;
-
-	int power_cubes; /* used for tracking the cubes in coop games */
-	int score; /* for calculating total unit score in coop games */
 
 	qboolean spectator; /* client is a spectator */
 } client_persistant_t;
@@ -651,8 +615,6 @@ struct gclient_s
 
 	qboolean showscores; /* set layout stat */
 	qboolean showinventory; /* set layout stat */
-
-	int ammo_index;
 
 	int buttons;
 	int oldbuttons;

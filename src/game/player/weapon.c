@@ -56,73 +56,6 @@ P_ProjectSource(gclient_t *client, vec3_t point, vec3_t distance,
 	G_ProjectSource(point, _distance, forward, right, result);
 }
 
-/*
- * Each player can have two noise objects associated with it:
- * a personal noise (jumping, pain, weapon firing), and a weapon
- * target noise (bullet wall impacts)
- *
- * Monsters that don't directly see the player can move
- * to a noise in hopes of seeing the player from there.
- */
-void
-PlayerNoise(edict_t *who, vec3_t where, int type)
-{
-	edict_t *noise;
-
-	if (!who)
-	{
-		return;
-	}
-
-	if (deathmatch->value)
-	{
-		return;
-	}
-
-	if (who->flags & FL_NOTARGET)
-	{
-		return;
-	}
-
-	if (!who->mynoise)
-	{
-		noise = G_Spawn();
-		noise->classname = "player_noise";
-		VectorSet(noise->mins, -8, -8, -8);
-		VectorSet(noise->maxs, 8, 8, 8);
-		noise->owner = who;
-		noise->svflags = SVF_NOCLIENT;
-		who->mynoise = noise;
-
-		noise = G_Spawn();
-		noise->classname = "player_noise";
-		VectorSet(noise->mins, -8, -8, -8);
-		VectorSet(noise->maxs, 8, 8, 8);
-		noise->owner = who;
-		noise->svflags = SVF_NOCLIENT;
-		who->mynoise2 = noise;
-	}
-
-	if ((type == PNOISE_SELF) || (type == PNOISE_WEAPON))
-	{
-		noise = who->mynoise;
-		level.sound_entity = noise;
-		level.sound_entity_framenum = level.framenum;
-	}
-	else
-	{
-		noise = who->mynoise2;
-		level.sound2_entity = noise;
-		level.sound2_entity_framenum = level.framenum;
-	}
-
-	VectorCopy(where, noise->s.origin);
-	VectorSubtract(where, noise->maxs, noise->absmin);
-	VectorAdd(where, noise->maxs, noise->absmax);
-	noise->last_sound_time = level.time;
-	gi.linkentity(noise);
-}
-
 void
 ChangeWeapon(edict_t *ent)
 {
@@ -151,8 +84,6 @@ ChangeWeapon(edict_t *ent)
 
 		ent->s.skinnum = (ent - g_edicts - 1) | i;
 	}
-
-	ent->client->ammo_index = 0;
 
 	if (!ent->client->pers.weapon)
 	{
@@ -432,11 +363,6 @@ fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 	gi.WritePosition(tr.endpos);
 	gi.WriteDir(tr.plane.normal);
 	gi.multicast(tr.endpos, MULTICAST_PVS);
-
-	if (self->client)
-	{
-		PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
-	}
 }
 
 void
@@ -474,7 +400,6 @@ weapon_shotgun_fire(edict_t *ent)
 	gi.multicast(ent->s.origin, MULTICAST_PVS);
 
 	ent->client->ps.gunframe++;
-	PlayerNoise(ent, start, PNOISE_WEAPON);
 }
 
 void

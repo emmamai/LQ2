@@ -177,116 +177,6 @@ SP_target_speaker(edict_t *ent)
 /* ========================================================== */
 
 /*
- * QUAKED target_secret (1 0 1) (-8 -8 -8) (8 8 8)
- * Counts a secret found. These are single use targets.
- */
-void
-use_target_secret(edict_t *ent, edict_t *other /* unused */, edict_t *activator /* acticator */)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	gi.sound(ent, CHAN_VOICE, ent->noise_index, 1, ATTN_NORM, 0);
-
-	level.found_secrets++;
-
-	G_UseTargets(ent, activator);
-	G_FreeEdict(ent);
-}
-
-void
-SP_target_secret(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	if (deathmatch->value)
-	{
-		/* auto-remove for deathmatch */
-		G_FreeEdict(ent);
-		return;
-	}
-
-	ent->use = use_target_secret;
-
-	if (!st.noise)
-	{
-		st.noise = "misc/secret.wav";
-	}
-
-	ent->noise_index = gi.soundindex(st.noise);
-	ent->svflags = SVF_NOCLIENT;
-	level.total_secrets++;
-
-	/* Map quirk for mine3 */
-	if (!Q_stricmp(level.mapname, "mine3") && (ent->s.origin[0] == 280) &&
-		(ent->s.origin[1] == -2048) && (ent->s.origin[2] == -624))
-	{
-		ent->message = "You have found a secret area.";
-	}
-}
-
-/* ========================================================== */
-
-/*
- * QUAKED target_goal (1 0 1) (-8 -8 -8) (8 8 8)
- * Counts a goal completed. These are single use targets.
- */
-void
-use_target_goal(edict_t *ent, edict_t *other /* unused */, edict_t *activator /* unused */)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	gi.sound(ent, CHAN_VOICE, ent->noise_index, 1, ATTN_NORM, 0);
-
-	level.found_goals++;
-
-	if (level.found_goals == level.total_goals)
-	{
-		gi.configstring(CS_CDTRACK, "0");
-	}
-
-	G_UseTargets(ent, activator);
-	G_FreeEdict(ent);
-}
-
-void
-SP_target_goal(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	if (deathmatch->value)
-	{
-		/* auto-remove for deathmatch */
-		G_FreeEdict(ent);
-		return;
-	}
-
-	ent->use = use_target_goal;
-
-	if (!st.noise)
-	{
-		st.noise = "misc/secret.wav";
-	}
-
-	ent->noise_index = gi.soundindex(st.noise);
-	ent->svflags = SVF_NOCLIENT;
-	level.total_goals++;
-}
-
-/* ========================================================== */
-
-/*
  * QUAKED target_explosion (1 0 0) (-8 -8 -8) (8 8 8)
  * Spawns an explosion temporary entity when used.
  *
@@ -365,16 +255,8 @@ use_target_changelevel(edict_t *self, edict_t *other, edict_t *activator)
 		return; /* already activated */
 	}
 
-	if (!deathmatch->value && !coop->value)
-	{
-		if (g_edicts[1].health <= 0)
-		{
-			return;
-		}
-	}
-
 	/* if noexit, do a ton of damage to other */
-	if (deathmatch->value && !((int)dmflags->value & DF_ALLOW_EXIT) &&
+	if (!((int)dmflags->value & DF_ALLOW_EXIT) &&
 		(other != world))
 	{
 		T_Damage(other, self, self, vec3_origin, other->s.origin,
@@ -384,13 +266,10 @@ use_target_changelevel(edict_t *self, edict_t *other, edict_t *activator)
 	}
 
 	/* if multiplayer, let everyone know who hit the exit */
-	if (deathmatch->value)
+	if (activator && activator->client)
 	{
-		if (activator && activator->client)
-		{
-			gi.bprintf(PRINT_HIGH, "%s exited the level.\n",
-					activator->client->pers.netname);
-		}
+		gi.bprintf(PRINT_HIGH, "%s exited the level.\n",
+				activator->client->pers.netname);
 	}
 
 	/* if going to a new unit, clear cross triggers */
@@ -631,134 +510,4 @@ SP_target_crosslevel_target(edict_t *self)
 
 	self->think = target_crosslevel_target_think;
 	self->nextthink = level.time + self->delay;
-}
-
-/* ========================================================== */
-
-/*
- * QUAKED target_lightramp (0 .5 .8) (-8 -8 -8) (8 8 8) TOGGLE
- *  speed		How many seconds the ramping will take
- *  message		two letters; starting lightlevel and ending lightlevel
- */
-void
-target_lightramp_think(edict_t *self)
-{
-	char style[2];
-
-	if (!self)
-	{
-		return;
-	}
-
-	style[0] = 'a' + self->movedir[0] +
-			   (level.time - self->timestamp) / FRAMETIME * self->movedir[2];
-	style[1] = 0;
-	gi.configstring(CS_LIGHTS + self->enemy->style, style);
-
-	if ((level.time - self->timestamp) < self->speed)
-	{
-		self->nextthink = level.time + FRAMETIME;
-	}
-	else if (self->spawnflags & 1)
-	{
-		char temp;
-
-		temp = self->movedir[0];
-		self->movedir[0] = self->movedir[1];
-		self->movedir[1] = temp;
-		self->movedir[2] *= -1;
-	}
-}
-
-void
-target_lightramp_use(edict_t *self, edict_t *other /* unused */, edict_t *activator /* unused */)
-{
-	if (!self)
-	{
-		return;
-	}
-
-	if (!self->enemy)
-	{
-		edict_t *e;
-
-		/* check all the targets */
-		e = NULL;
-
-		while (1)
-		{
-			e = G_Find(e, FOFS(targetname), self->target);
-
-			if (!e)
-			{
-				break;
-			}
-
-			if (strcmp(e->classname, "light") != 0)
-			{
-				gi.dprintf("%s at %s ", self->classname, vtos(self->s.origin));
-				gi.dprintf("target %s (%s at %s) is not a light\n",
-						self->target, e->classname, vtos(e->s.origin));
-			}
-			else
-			{
-				self->enemy = e;
-			}
-		}
-
-		if (!self->enemy)
-		{
-			gi.dprintf("%s target %s not found at %s\n",
-					self->classname, self->target,
-					vtos(self->s.origin));
-			G_FreeEdict(self);
-			return;
-		}
-	}
-
-	self->timestamp = level.time;
-	target_lightramp_think(self);
-}
-
-void
-SP_target_lightramp(edict_t *self)
-{
-	if (!self)
-	{
-		return;
-	}
-
-	if (!self->message || (strlen(self->message) != 2) ||
-		(self->message[0] < 'a') || (self->message[0] > 'z') ||
-		(self->message[1] < 'a') || (self->message[1] > 'z') ||
-		(self->message[0] == self->message[1]))
-	{
-		gi.dprintf("target_lightramp has bad ramp (%s) at %s\n",
-				self->message, vtos(self->s.origin));
-		G_FreeEdict(self);
-		return;
-	}
-
-	if (deathmatch->value)
-	{
-		G_FreeEdict(self);
-		return;
-	}
-
-	if (!self->target)
-	{
-		gi.dprintf("%s with no target at %s\n", self->classname,
-				vtos(self->s.origin));
-		G_FreeEdict(self);
-		return;
-	}
-
-	self->svflags |= SVF_NOCLIENT;
-	self->use = target_lightramp_use;
-	self->think = target_lightramp_think;
-
-	self->movedir[0] = self->message[0] - 'a';
-	self->movedir[1] = self->message[1] - 'a';
-	self->movedir[2] =
-		(self->movedir[1] - self->movedir[0]) / (self->speed / FRAMETIME);
 }

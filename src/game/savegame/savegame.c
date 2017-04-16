@@ -156,7 +156,6 @@ void InitGame(void) {
 	maxclients = gi.cvar("maxclients", "4", CVAR_SERVERINFO | CVAR_LATCH);
 	maxspectators = gi.cvar("maxspectators", "4", CVAR_SERVERINFO);
 	deathmatch = gi.cvar("deathmatch", "0", CVAR_LATCH);
-	coop = gi.cvar("coop", "0", CVAR_LATCH);
 	skill = gi.cvar("skill", "1", CVAR_LATCH);
 	maxentities = gi.cvar("maxentities", "1024", CVAR_LATCH);
 
