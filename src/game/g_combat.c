@@ -39,29 +39,21 @@
  * knockback	force to be applied against targ as a result of the damage
  *
  * dflags -> these flags are used to control how T_Damage works
- *      DAMAGE_RADIUS			damage was indirect (from a nearby explosion)
- *      DAMAGE_NO_ARMOR			armor does not protect from this damage
- *      DAMAGE_ENERGY			damage is from an energy based weapon
  *      DAMAGE_NO_KNOCKBACK		do not affect velocity, just view angles
- *      DAMAGE_BULLET			damage is from a bullet (used for ricochets)
  *      DAMAGE_NO_PROTECTION	kills godmode, armor, everything
  */
 
-void
-T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
-		vec3_t dir, vec3_t point, vec3_t normal, int damage,
-		int knockback, int dflags, int mod)
-{
+void T_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker,
+               vec3_t dir, vec3_t point, vec3_t normal, int damage,
+               int knockback, int dflags, int mod ) {
 	gclient_t *client;
 	int take;
 
-	if (!targ || !inflictor || !attacker)
-	{
+	if ( !targ || !inflictor || !attacker ) {
 		return;
 	}
 
-	if (!targ->takedamage)
-	{
+	if ( !targ->takedamage ) {
 		return;
 	}
 
@@ -69,54 +61,45 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	client = targ->client;
 
-	VectorNormalize(dir);
+	VectorNormalize( dir );
 
-	if (targ->flags & FL_NO_KNOCKBACK)
-	{
+	if ( targ->flags & FL_NO_KNOCKBACK ) {
 		knockback = 0;
 	}
 
 	/* figure momentum add */
-	if (!(dflags & DAMAGE_NO_KNOCKBACK))
-	{
-		if ((knockback) && (targ->movetype != MOVETYPE_NONE) &&
-			(targ->movetype != MOVETYPE_BOUNCE) &&
-			(targ->movetype != MOVETYPE_PUSH) &&
-			(targ->movetype != MOVETYPE_STOP))
-		{
+	if ( !( dflags & DAMAGE_NO_KNOCKBACK ) ) {
+		if ( ( knockback ) && ( targ->movetype != MOVETYPE_NONE ) &&
+		        ( targ->movetype != MOVETYPE_BOUNCE ) &&
+		        ( targ->movetype != MOVETYPE_PUSH ) &&
+		        ( targ->movetype != MOVETYPE_STOP ) ) {
 			vec3_t kvel;
 			float mass;
 
-			if (targ->mass < 50)
-			{
+			if ( targ->mass < 50 ) {
 				mass = 50;
-			}
-			else
-			{
+			} else {
 				mass = targ->mass;
 			}
 
-			VectorScale(dir, 500.0 * (float)knockback / mass, kvel);
-			VectorAdd(targ->velocity, kvel, targ->velocity);
+			VectorScale( dir, 500.0 * ( float )knockback / mass, kvel );
+			VectorAdd( targ->velocity, kvel, targ->velocity );
 		}
 	}
 
 	take = damage;
 
 	/* check for godmode */
-	if ((targ->flags & FL_GODMODE) && !(dflags & DAMAGE_NO_PROTECTION))
-	{
+	if ( ( targ->flags & FL_GODMODE ) && !( dflags & DAMAGE_NO_PROTECTION ) ) {
 		take = 0;
 	}
 
 	/* check for invincibility */
-	if ((client && (client->invincible_framenum > level.framenum)) &&
-		!(dflags & DAMAGE_NO_PROTECTION))
-	{
-		if (targ->pain_debounce_time < level.time)
-		{
-			gi.sound(targ, CHAN_ITEM, gi.soundindex(
-						"items/protect4.wav"), 1, ATTN_NORM, 0);
+	if ( ( client && ( client->invincible_framenum > level.framenum ) ) &&
+	        !( dflags & DAMAGE_NO_PROTECTION ) ) {
+		if ( targ->pain_debounce_time < level.time ) {
+			gi.sound( targ, CHAN_ITEM, gi.soundindex(
+			              "items/protect4.wav" ), 1, ATTN_NORM, 0 );
 			targ->pain_debounce_time = level.time + 2;
 		}
 
@@ -124,51 +107,41 @@ T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	}
 
 	/* do the damage */
-	if (take)
-	{
+	if ( take ) {
 		targ->health = targ->health - take;
 
-		if (targ->health <= 0)
-		{
-			if (client)
-			{
+		if ( targ->health <= 0 ) {
+			if ( client ) {
 				targ->flags |= FL_NO_KNOCKBACK;
 			}
 
-			if (targ->health < -999)
-			{
+			if ( targ->health < -999 ) {
 				targ->health = -999;
 			}
 
 			targ->enemy = attacker;
 
-			targ->die(targ, inflictor, attacker, damage, point);
+			targ->die( targ, inflictor, attacker, damage, point );
 			return;
 		}
 	}
-	
-	if (client)
-	{
-		if (!(targ->flags & FL_GODMODE) && (take))
-		{
-			targ->pain(targ, attacker, knockback, take);
+
+	if ( client ) {
+		if ( !( targ->flags & FL_GODMODE ) && ( take ) ) {
+			targ->pain( targ, attacker, knockback, take );
 		}
-	}
-	else if (take)
-	{
-		if (targ->pain)
-		{
-			targ->pain(targ, attacker, knockback, take);
+	} else if ( take ) {
+		if ( targ->pain ) {
+			targ->pain( targ, attacker, knockback, take );
 		}
 	}
 
 	/* add to the damage inflicted on a player this frame
 	   the total will be turned into screen blends and view
 	   angle kicks at the end of the frame */
-	if (client)
-	{
+	if ( client ) {
 		client->damage_blood += take;
 		client->damage_knockback += knockback;
-		VectorCopy(point, client->damage_from);
+		VectorCopy( point, client->damage_from );
 	}
 }

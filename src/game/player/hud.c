@@ -19,7 +19,7 @@
  *
  * =======================================================================
  *
- * HUD, deathmatch scoreboard, and intermission stuff.
+ * HUD, scoreboard, and intermission stuff.
  *
  * =======================================================================
  */
@@ -27,20 +27,18 @@
 #include "../header/local.h"
 
 void
-MoveClientToIntermission(edict_t *ent)
-{
-	if (!ent)
-	{
+MoveClientToIntermission( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
 	ent->client->showscores = true;
 
-	VectorCopy(level.intermission_origin, ent->s.origin);
+	VectorCopy( level.intermission_origin, ent->s.origin );
 	ent->client->ps.pmove.origin[0] = level.intermission_origin[0] * 8;
 	ent->client->ps.pmove.origin[1] = level.intermission_origin[1] * 8;
 	ent->client->ps.pmove.origin[2] = level.intermission_origin[2] * 8;
-	VectorCopy(level.intermission_angle, ent->client->ps.viewangles);
+	VectorCopy( level.intermission_angle, ent->client->ps.viewangles );
 	ent->client->ps.pmove.pm_type = PM_FREEZE;
 	ent->client->ps.gunindex = 0;
 	ent->client->ps.blend[3] = 0;
@@ -58,52 +56,45 @@ MoveClientToIntermission(edict_t *ent)
 	ent->s.sound = 0;
 	ent->solid = SOLID_NOT;
 
-	gi.linkentity(ent);
+	gi.linkentity( ent );
 
 	/* add the layout */
-	DeathmatchScoreboardMessage(ent, NULL);
-	gi.unicast(ent, true);
+	DeathmatchScoreboardMessage( ent, NULL );
+	gi.unicast( ent, true );
 }
 
 void
-BeginIntermission(edict_t *targ)
-{
+BeginIntermission( edict_t *targ ) {
 	int i;
 	edict_t *ent, *client;
 
-	if (!targ)
-	{
+	if ( !targ ) {
 		return;
 	}
 
-	if (level.intermissiontime)
-	{
+	if ( level.intermissiontime ) {
 		return; /* already activated */
 	}
 
 	game.autosaved = false;
 
 	/* respawn any dead clients */
-	for (i = 0; i < maxclients->value; i++)
-	{
+	for ( i = 0; i < maxclients->value; i++ ) {
 		client = g_edicts + 1 + i;
 
-		if (!client->inuse)
-		{
+		if ( !client->inuse ) {
 			continue;
 		}
 
-		if (client->health <= 0)
-		{
-			respawn(client);
+		if ( client->health <= 0 ) {
+			respawn( client );
 		}
 	}
 
 	level.intermissiontime = level.time;
 	level.changemap = targ->map;
 
-	if (!strstr(level.changemap, "*"))
-	{
+	if ( !strstr( level.changemap, "*" ) ) {
 		level.exitintermission = 1; /* go immediately to the next level */
 		return;
 	}
@@ -111,64 +102,54 @@ BeginIntermission(edict_t *targ)
 	level.exitintermission = 0;
 
 	/* find an intermission spot */
-	ent = G_Find(NULL, FOFS(classname), "info_player_intermission");
+	ent = G_Find( NULL, FOFS( classname ), "info_player_intermission" );
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		/* the map creator forgot to put in an intermission point... */
-		ent = G_Find(NULL, FOFS(classname), "info_player_start");
+		ent = G_Find( NULL, FOFS( classname ), "info_player_start" );
 
-		if (!ent)
-		{
-			ent = G_Find(NULL, FOFS(classname), "info_player_deathmatch");
+		if ( !ent ) {
+			ent = G_Find( NULL, FOFS( classname ), "info_player_deathmatch" );
 		}
-	}
-	else
-	{
+	} else {
 		/* chose one of four spots */
 		i = randk() & 3;
 
-		while (i--)
-		{
-			ent = G_Find(ent, FOFS(classname), "info_player_intermission");
+		while ( i-- ) {
+			ent = G_Find( ent, FOFS( classname ), "info_player_intermission" );
 
-			if (!ent) /* wrap around the list */
-			{
-				ent = G_Find(ent, FOFS(classname), "info_player_intermission");
+			if ( !ent ) { /* wrap around the list */
+				ent = G_Find( ent, FOFS( classname ), "info_player_intermission" );
 			}
 		}
 	}
 
-	VectorCopy(ent->s.origin, level.intermission_origin);
-	VectorCopy(ent->s.angles, level.intermission_angle);
+	VectorCopy( ent->s.origin, level.intermission_origin );
+	VectorCopy( ent->s.angles, level.intermission_angle );
 
 	/* In fact1 the intermission collides
 	   with an area portal, resulting in
 	   clutterings */
-	if (!Q_stricmp(level.mapname, "fact1"))
-	{
+	if ( !Q_stricmp( level.mapname, "fact1" ) ) {
 		level.intermission_origin[0] = 1037.0;
 		level.intermission_origin[1] = 1100.0;
 		level.intermission_origin[2] = 222.0;
 	}
 
 	/* move all clients to the intermission point */
-	for (i = 0; i < maxclients->value; i++)
-	{
+	for ( i = 0; i < maxclients->value; i++ ) {
 		client = g_edicts + 1 + i;
 
-		if (!client->inuse)
-		{
+		if ( !client->inuse ) {
 			continue;
 		}
 
-		MoveClientToIntermission(client);
+		MoveClientToIntermission( client );
 	}
 }
 
 void
-DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
-{
+DeathmatchScoreboardMessage( edict_t *ent, edict_t *killer ) {
 	char entry[1024];
 	char string[1400];
 	int stringlength;
@@ -181,35 +162,29 @@ DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	edict_t *cl_ent;
 	char *tag;
 
-	if (!ent) /* killer can be NULL */
-	{
+	if ( !ent ) { /* killer can be NULL */
 		return;
 	}
 
 	/* sort the clients by score */
 	total = 0;
 
-	for (i = 0; i < game.maxclients; i++)
-	{
+	for ( i = 0; i < game.maxclients; i++ ) {
 		cl_ent = g_edicts + 1 + i;
 
-		if (!cl_ent->inuse || game.clients[i].resp.spectator)
-		{
+		if ( !cl_ent->inuse || game.clients[i].resp.spectator ) {
 			continue;
 		}
 
 		score = game.clients[i].resp.score;
 
-		for (j = 0; j < total; j++)
-		{
-			if (score > sortedscores[j])
-			{
+		for ( j = 0; j < total; j++ ) {
+			if ( score > sortedscores[j] ) {
 				break;
 			}
 		}
 
-		for (k = total; k > j; k--)
-		{
+		for ( k = total; k > j; k-- ) {
 			sorted[k] = sorted[k - 1];
 			sortedscores[k] = sortedscores[k - 1];
 		}
@@ -222,116 +197,86 @@ DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	/* print level name and exit rules */
 	string[0] = 0;
 
-	stringlength = strlen(string);
+	stringlength = strlen( string );
 
 	/* add the clients in sorted order */
-	if (total > 12)
-	{
+	if ( total > 12 ) {
 		total = 12;
 	}
 
-	for (i = 0; i < total; i++)
-	{
+	for ( i = 0; i < total; i++ ) {
 		cl = &game.clients[sorted[i]];
 		cl_ent = g_edicts + 1 + sorted[i];
 
-		x = (i >= 6) ? 160 : 0;
-		y = 32 + 32 * (i % 6);
+		x = ( i >= 6 ) ? 160 : 0;
+		y = 32 + 32 * ( i % 6 );
 
 		/* add a dogtag */
-		if (cl_ent == ent)
-		{
+		if ( cl_ent == ent ) {
 			tag = "tag1";
-		}
-		else if (cl_ent == killer)
-		{
+		} else if ( cl_ent == killer ) {
 			tag = "tag2";
-		}
-		else
-		{
+		} else {
 			tag = NULL;
 		}
 
-		if (tag)
-		{
-			Com_sprintf(entry, sizeof(entry),
-					"xv %i yv %i picn %s ", x + 32, y, tag);
-			j = strlen(entry);
+		if ( tag ) {
+			Com_sprintf( entry, sizeof( entry ),
+			             "xv %i yv %i picn %s ", x + 32, y, tag );
+			j = strlen( entry );
 
-			if (stringlength + j > 1024)
-			{
+			if ( stringlength + j > 1024 ) {
 				break;
 			}
 
-			strcpy(string + stringlength, entry);
+			strcpy( string + stringlength, entry );
 			stringlength += j;
 		}
 
 		/* send the layout */
-		Com_sprintf(entry, sizeof(entry),
-				"client %i %i %i %i %i %i ",
-				x, y, sorted[i], cl->resp.score, cl->ping,
-				(level.framenum - cl->resp.enterframe) / 600);
-		j = strlen(entry);
+		Com_sprintf( entry, sizeof( entry ),
+		             "client %i %i %i %i %i %i ",
+		             x, y, sorted[i], cl->resp.score, cl->ping,
+		             ( level.framenum - cl->resp.enterframe ) / 600 );
+		j = strlen( entry );
 
-		if (stringlength + j > 1024)
-		{
+		if ( stringlength + j > 1024 ) {
 			break;
 		}
 
-		strcpy(string + stringlength, entry);
+		strcpy( string + stringlength, entry );
 		stringlength += j;
 	}
 
-	gi.WriteByte(svc_layout);
-	gi.WriteString(string);
+	gi.WriteByte( svc_layout );
+	gi.WriteString( string );
 }
 
 /* ======================================================================= */
 
 void
-G_SetStats(edict_t *ent)
-{
-	if (!ent)
-	{
+G_SetStats( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
-	/* pickup message */
-	if (level.time > ent->client->pickup_msg_time)
-	{
-		ent->client->ps.stats[STAT_PICKUP_ICON] = 0;
-		ent->client->ps.stats[STAT_PICKUP_STRING] = 0;
-	}
-
 	/* timers */
-	if (ent->client->invincible_framenum > level.framenum)
-	{
+	if ( ent->client->invincible_framenum > level.framenum ) {
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex(
-				"p_invulnerability");
+		            "p_invulnerability" );
 		ent->client->ps.stats[STAT_TIMER] =
-			(ent->client->invincible_framenum - level.framenum) / 10;
-	}
-	else
-	{
+		    ( ent->client->invincible_framenum - level.framenum ) / 10;
+	} else {
 		ent->client->ps.stats[STAT_TIMER_ICON] = 0;
 		ent->client->ps.stats[STAT_TIMER] = 0;
 	}
 
-	ent->client->ps.stats[STAT_SELECTED_ITEM] = ent->client->pers.selected_item;
-
 	/* layouts */
 	ent->client->ps.stats[STAT_LAYOUTS] = 0;
 
-	if ((ent->client->pers.health <= 0) || level.intermissiontime ||
-		ent->client->showscores)
-	{
+	if ( ( ent->client->pers.health <= 0 ) || level.intermissiontime ||
+	        ent->client->showscores ) {
 		ent->client->ps.stats[STAT_LAYOUTS] |= 1;
-	}
-
-	if (ent->client->showinventory && (ent->client->pers.health > 0))
-	{
-		ent->client->ps.stats[STAT_LAYOUTS] |= 2;
 	}
 
 	/* frags */
@@ -341,43 +286,36 @@ G_SetStats(edict_t *ent)
 }
 
 void
-G_CheckChaseStats(edict_t *ent)
-{
+G_CheckChaseStats( edict_t *ent ) {
 	int i;
 	gclient_t *cl;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	for (i = 1; i <= maxclients->value; i++)
-	{
+	for ( i = 1; i <= maxclients->value; i++ ) {
 		cl = g_edicts[i].client;
 
-		if (!g_edicts[i].inuse || (cl->chase_target != ent))
-		{
+		if ( !g_edicts[i].inuse || ( cl->chase_target != ent ) ) {
 			continue;
 		}
 
-		memcpy(cl->ps.stats, ent->client->ps.stats, sizeof(cl->ps.stats));
-		G_SetSpectatorStats(g_edicts + i);
+		memcpy( cl->ps.stats, ent->client->ps.stats, sizeof( cl->ps.stats ) );
+		G_SetSpectatorStats( g_edicts + i );
 	}
 }
 
 void
-G_SetSpectatorStats(edict_t *ent)
-{
-	if (!ent)
-	{
+G_SetSpectatorStats( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
 	gclient_t *cl = ent->client;
 
-	if (!cl->chase_target)
-	{
-		G_SetStats(ent);
+	if ( !cl->chase_target ) {
+		G_SetStats( ent );
 	}
 
 	cl->ps.stats[STAT_SPECTATOR] = 1;
@@ -385,23 +323,14 @@ G_SetSpectatorStats(edict_t *ent)
 	/* layouts are independant in spectator */
 	cl->ps.stats[STAT_LAYOUTS] = 0;
 
-	if ((cl->pers.health <= 0) || level.intermissiontime || cl->showscores)
-	{
+	if ( ( cl->pers.health <= 0 ) || level.intermissiontime || cl->showscores ) {
 		cl->ps.stats[STAT_LAYOUTS] |= 1;
 	}
 
-	if (cl->showinventory && (cl->pers.health > 0))
-	{
-		cl->ps.stats[STAT_LAYOUTS] |= 2;
-	}
-
-	if (cl->chase_target && cl->chase_target->inuse)
-	{
+	if ( cl->chase_target && cl->chase_target->inuse ) {
 		cl->ps.stats[STAT_CHASE] = CS_PLAYERSKINS +
-								   (cl->chase_target - g_edicts) - 1;
-	}
-	else
-	{
+		                           ( cl->chase_target - g_edicts ) - 1;
+	} else {
 		cl->ps.stats[STAT_CHASE] = 0;
 	}
 }

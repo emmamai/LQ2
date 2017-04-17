@@ -31,146 +31,119 @@
  * Sets client to godmode
  */
 void
-Cmd_God_f(edict_t *ent)
-{
+Cmd_God_f( edict_t *ent ) {
 	char *msg;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	if (!sv_cheats->value)
-	{
+	if ( !sv_cheats->value ) {
 		gi.cprintf( ent, PRINT_HIGH,
-				"You must run the server with '+set cheats 1' to enable this command.\n");
+		            "You must run the server with '+set cheats 1' to enable this command.\n" );
 		return;
 	}
 
 	ent->flags ^= FL_GODMODE;
 
-	if (!(ent->flags & FL_GODMODE))
-	{
+	if ( !( ent->flags & FL_GODMODE ) ) {
 		msg = "godmode OFF\n";
-	}
-	else
-	{
+	} else {
 		msg = "godmode ON\n";
 	}
 
-	gi.cprintf(ent, PRINT_HIGH, msg);
+	gi.cprintf( ent, PRINT_HIGH, msg );
 }
 
 /*
  * argv(0) noclip
  */
 void
-Cmd_Noclip_f(edict_t *ent)
-{
+Cmd_Noclip_f( edict_t *ent ) {
 	char *msg;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	if (!sv_cheats->value)
-	{
+	if ( !sv_cheats->value ) {
 		gi.cprintf( ent, PRINT_HIGH,
-				"You must run the server with '+set cheats 1' to enable this command.\n");
+		            "You must run the server with '+set cheats 1' to enable this command.\n" );
 		return;
 	}
 
-	if (ent->movetype == MOVETYPE_NOCLIP)
-	{
+	if ( ent->movetype == MOVETYPE_NOCLIP ) {
 		ent->movetype = MOVETYPE_WALK;
 		msg = "noclip OFF\n";
-	}
-	else
-	{
+	} else {
 		ent->movetype = MOVETYPE_NOCLIP;
 		msg = "noclip ON\n";
 	}
 
-	gi.cprintf(ent, PRINT_HIGH, msg);
-} 
+	gi.cprintf( ent, PRINT_HIGH, msg );
+}
 
 void
-Cmd_Score_f(edict_t *ent)
-{
-	if (!ent)
-	{
+Cmd_Score_f( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
-	ent->client->showinventory = false;
-
-	if (ent->client->showscores)
-	{
+	if ( ent->client->showscores ) {
 		ent->client->showscores = false;
 		return;
 	}
 
 	ent->client->showscores = true;
-	DeathmatchScoreboardMessage(ent, ent->enemy);
-	gi.unicast(ent, true);
+	DeathmatchScoreboardMessage( ent, ent->enemy );
+	gi.unicast( ent, true );
 }
 
 void
-Cmd_Kill_f(edict_t *ent)
-{
-	if (!ent)
-	{
+Cmd_Kill_f( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
-	if (((level.time - ent->client->respawn_time) < 5) ||
-		(ent->client->resp.spectator))
-	{
+	if ( ( ( level.time - ent->client->respawn_time ) < 5 ) ||
+	        ( ent->client->resp.spectator ) ) {
 		return;
 	}
 
 	ent->flags &= ~FL_GODMODE;
 	ent->health = 0;
 	meansOfDeath = MOD_SUICIDE;
-	player_die(ent, ent, ent, 100000, vec3_origin);
+	player_die( ent, ent, ent, 100000, vec3_origin );
 }
 
 void
-Cmd_PutAway_f(edict_t *ent)
-{
-	if (!ent)
-	{
+Cmd_PutAway_f( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
 	ent->client->showscores = false;
-	ent->client->showinventory = false;
 }
 
 int
-PlayerSort(void const *a, void const *b)
-{
+PlayerSort( void const *a, void const *b ) {
 	int anum, bnum;
 
-	if (!a || !b)
-	{
+	if ( !a || !b ) {
 		return 0;
 	}
 
-	anum = *(int *)a;
-	bnum = *(int *)b;
+	anum = *( int * )a;
+	bnum = *( int * )b;
 
 	anum = game.clients[anum].ps.stats[STAT_FRAGS];
 	bnum = game.clients[bnum].ps.stats[STAT_FRAGS];
 
-	if (anum < bnum)
-	{
+	if ( anum < bnum ) {
 		return -1;
 	}
 
-	if (anum > bnum)
-	{
+	if ( anum > bnum ) {
 		return 1;
 	}
 
@@ -178,331 +151,282 @@ PlayerSort(void const *a, void const *b)
 }
 
 void
-Cmd_Players_f(edict_t *ent)
-{
+Cmd_Players_f( edict_t *ent ) {
 	int i;
 	int count;
 	char small[64];
 	char large[1280];
 	int index[256];
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
 	count = 0;
 
-	for (i = 0; i < maxclients->value; i++)
-	{
-		if (game.clients[i].pers.connected)
-		{
+	for ( i = 0; i < maxclients->value; i++ ) {
+		if ( game.clients[i].pers.connected ) {
 			index[count] = i;
 			count++;
 		}
 	}
 
 	/* sort by frags */
-	qsort(index, count, sizeof(index[0]), PlayerSort);
+	qsort( index, count, sizeof( index[0] ), PlayerSort );
 
 	/* print information */
 	large[0] = 0;
 
-	for (i = 0; i < count; i++)
-	{
-		Com_sprintf(small, sizeof(small), "%3i %s\n",
-				game.clients[index[i]].ps.stats[STAT_FRAGS],
-				game.clients[index[i]].pers.netname);
+	for ( i = 0; i < count; i++ ) {
+		Com_sprintf( small, sizeof( small ), "%3i %s\n",
+		             game.clients[index[i]].ps.stats[STAT_FRAGS],
+		             game.clients[index[i]].pers.netname );
 
-		if (strlen(small) + strlen(large) > sizeof(large) - 100)
-		{
+		if ( strlen( small ) + strlen( large ) > sizeof( large ) - 100 ) {
 			/* can't print all of them in one packet */
-			strcat(large, "...\n");
+			strcat( large, "...\n" );
 			break;
 		}
 
-		strcat(large, small);
+		strcat( large, small );
 	}
 
-	gi.cprintf(ent, PRINT_HIGH, "%s\n%i players\n", large, count);
+	gi.cprintf( ent, PRINT_HIGH, "%s\n%i players\n", large, count );
 }
 
 void
-Cmd_Wave_f(edict_t *ent)
-{
+Cmd_Wave_f( edict_t *ent ) {
 	int i;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	i = (int)strtol(gi.argv(1), (char **)NULL, 10);
+	i = ( int )strtol( gi.argv( 1 ), ( char ** )NULL, 10 );
 
 	/* can't wave when ducked */
-	if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
-	{
+	if ( ent->client->ps.pmove.pm_flags & PMF_DUCKED ) {
 		return;
 	}
 
-	if (ent->client->anim_priority > ANIM_WAVE)
-	{
+	if ( ent->client->anim_priority > ANIM_WAVE ) {
 		return;
 	}
 
 	ent->client->anim_priority = ANIM_WAVE;
 
-	switch (i)
-	{
-		case 0:
-			gi.cprintf(ent, PRINT_HIGH, "flipoff\n");
-			ent->s.frame = FRAME_flip01 - 1;
-			ent->client->anim_end = FRAME_flip12;
-			break;
-		case 1:
-			gi.cprintf(ent, PRINT_HIGH, "salute\n");
-			ent->s.frame = FRAME_salute01 - 1;
-			ent->client->anim_end = FRAME_salute11;
-			break;
-		case 2:
-			gi.cprintf(ent, PRINT_HIGH, "taunt\n");
-			ent->s.frame = FRAME_taunt01 - 1;
-			ent->client->anim_end = FRAME_taunt17;
-			break;
-		case 3:
-			gi.cprintf(ent, PRINT_HIGH, "wave\n");
-			ent->s.frame = FRAME_wave01 - 1;
-			ent->client->anim_end = FRAME_wave11;
-			break;
-		case 4:
-		default:
-			gi.cprintf(ent, PRINT_HIGH, "point\n");
-			ent->s.frame = FRAME_point01 - 1;
-			ent->client->anim_end = FRAME_point12;
-			break;
+	switch ( i ) {
+	case 0:
+		gi.cprintf( ent, PRINT_HIGH, "flipoff\n" );
+		ent->s.frame = FRAME_flip01 - 1;
+		ent->client->anim_end = FRAME_flip12;
+		break;
+	case 1:
+		gi.cprintf( ent, PRINT_HIGH, "salute\n" );
+		ent->s.frame = FRAME_salute01 - 1;
+		ent->client->anim_end = FRAME_salute11;
+		break;
+	case 2:
+		gi.cprintf( ent, PRINT_HIGH, "taunt\n" );
+		ent->s.frame = FRAME_taunt01 - 1;
+		ent->client->anim_end = FRAME_taunt17;
+		break;
+	case 3:
+		gi.cprintf( ent, PRINT_HIGH, "wave\n" );
+		ent->s.frame = FRAME_wave01 - 1;
+		ent->client->anim_end = FRAME_wave11;
+		break;
+	case 4:
+	default:
+		gi.cprintf( ent, PRINT_HIGH, "point\n" );
+		ent->s.frame = FRAME_point01 - 1;
+		ent->client->anim_end = FRAME_point12;
+		break;
 	}
 }
 
 void
-Cmd_Say_f(edict_t *ent, qboolean arg0)
-{
+Cmd_Say_f( edict_t *ent, qboolean arg0 ) {
 	int i, j;
 	edict_t *other;
 	char *p;
 	char text[2048];
 	gclient_t *cl;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	if ((gi.argc() < 2) && !arg0)
-	{
+	if ( ( gi.argc() < 2 ) && !arg0 ) {
 		return;
 	}
 
-	Com_sprintf(text, sizeof(text), "%s: ", ent->client->pers.netname);
+	Com_sprintf( text, sizeof( text ), "%s: ", ent->client->pers.netname );
 
-	if (arg0)
-	{
-		strcat(text, gi.argv(0));
-		strcat(text, " ");
-		strcat(text, gi.args());
-	}
-	else
-	{
+	if ( arg0 ) {
+		strcat( text, gi.argv( 0 ) );
+		strcat( text, " " );
+		strcat( text, gi.args() );
+	} else {
 		p = gi.args();
 
-		if (*p == '"')
-		{
+		if ( *p == '"' ) {
 			p++;
-			p[strlen(p) - 1] = 0;
+			p[strlen( p ) - 1] = 0;
 		}
 
-		strcat(text, p);
+		strcat( text, p );
 	}
 
 	/* don't let text be too long for malicious reasons */
-	if (strlen(text) > 150)
-	{
+	if ( strlen( text ) > 150 ) {
 		text[150] = 0;
 	}
 
-	strcat(text, "\n");
+	strcat( text, "\n" );
 
-	if (flood_msgs->value)
-	{
+	if ( flood_msgs->value ) {
 		cl = ent->client;
 
-		if (level.time < cl->flood_locktill)
-		{
-			gi.cprintf(ent, PRINT_HIGH, "You can't talk for %d more seconds\n",
-					(int)(cl->flood_locktill - level.time));
+		if ( level.time < cl->flood_locktill ) {
+			gi.cprintf( ent, PRINT_HIGH, "You can't talk for %d more seconds\n",
+			            ( int )( cl->flood_locktill - level.time ) );
 			return;
 		}
 
 		i = cl->flood_whenhead - flood_msgs->value + 1;
 
-		if (i < 0)
-		{
-			i = (sizeof(cl->flood_when) / sizeof(cl->flood_when[0])) + i;
+		if ( i < 0 ) {
+			i = ( sizeof( cl->flood_when ) / sizeof( cl->flood_when[0] ) ) + i;
 		}
 
-		if (cl->flood_when[i] &&
-			(level.time - cl->flood_when[i] < flood_persecond->value))
-		{
+		if ( cl->flood_when[i] &&
+		        ( level.time - cl->flood_when[i] < flood_persecond->value ) ) {
 			cl->flood_locktill = level.time + flood_waitdelay->value;
-			gi.cprintf(ent, PRINT_CHAT,
-					"Flood protection:  You can't talk for %d seconds.\n",
-					(int)flood_waitdelay->value);
+			gi.cprintf( ent, PRINT_CHAT,
+			            "Flood protection:  You can't talk for %d seconds.\n",
+			            ( int )flood_waitdelay->value );
 			return;
 		}
 
-		cl->flood_whenhead = (cl->flood_whenhead + 1) %
-							 (sizeof(cl->flood_when) / sizeof(cl->flood_when[0]));
+		cl->flood_whenhead = ( cl->flood_whenhead + 1 ) %
+		                     ( sizeof( cl->flood_when ) / sizeof( cl->flood_when[0] ) );
 		cl->flood_when[cl->flood_whenhead] = level.time;
 	}
 
-	if (dedicated->value)
-	{
-		gi.cprintf(NULL, PRINT_CHAT, "%s", text);
+	if ( dedicated->value ) {
+		gi.cprintf( NULL, PRINT_CHAT, "%s", text );
 	}
 
-	for (j = 1; j <= game.maxclients; j++)
-	{
+	for ( j = 1; j <= game.maxclients; j++ ) {
 		other = &g_edicts[j];
 
-		if (!other->inuse)
-		{
+		if ( !other->inuse ) {
 			continue;
 		}
 
-		if (!other->client)
-		{
+		if ( !other->client ) {
 			continue;
 		}
 
-		gi.cprintf(other, PRINT_CHAT, "%s", text);
+		gi.cprintf( other, PRINT_CHAT, "%s", text );
 	}
 }
 
 void
-Cmd_PlayerList_f(edict_t *ent)
-{
+Cmd_PlayerList_f( edict_t *ent ) {
 	int i;
 	char st[80];
 	char text[1400];
 	edict_t *e2;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
 	/* connect time, ping, score, name */
 	*text = 0;
 
-	for (i = 0, e2 = g_edicts + 1; i < maxclients->value; i++, e2++)
-	{
-		if (!e2->inuse)
-		{
+	for ( i = 0, e2 = g_edicts + 1; i < maxclients->value; i++, e2++ ) {
+		if ( !e2->inuse ) {
 			continue;
 		}
 
-		Com_sprintf(st, sizeof(st), "%02d:%02d %4d %3d %s%s\n",
-				(level.framenum - e2->client->resp.enterframe) / 600,
-				((level.framenum - e2->client->resp.enterframe) % 600) / 10,
-				e2->client->ping,
-				e2->client->resp.score,
-				e2->client->pers.netname,
-				e2->client->resp.spectator ? " (spectator)" : "");
+		Com_sprintf( st, sizeof( st ), "%02d:%02d %4d %3d %s%s\n",
+		             ( level.framenum - e2->client->resp.enterframe ) / 600,
+		             ( ( level.framenum - e2->client->resp.enterframe ) % 600 ) / 10,
+		             e2->client->ping,
+		             e2->client->resp.score,
+		             e2->client->pers.netname,
+		             e2->client->resp.spectator ? " (spectator)" : "" );
 
-		if (strlen(text) + strlen(st) > sizeof(text) - 50)
-		{
-			strcpy(text + strlen(text), "And more...\n");
-			gi.cprintf(ent, PRINT_HIGH, "%s", text);
+		if ( strlen( text ) + strlen( st ) > sizeof( text ) - 50 ) {
+			strcpy( text + strlen( text ), "And more...\n" );
+			gi.cprintf( ent, PRINT_HIGH, "%s", text );
 			return;
 		}
 
-		strcat(text, st);
+		strcat( text, st );
 	}
 
-	gi.cprintf(ent, PRINT_HIGH, "%s", text);
+	gi.cprintf( ent, PRINT_HIGH, "%s", text );
 }
 
 void
-ClientCommand(edict_t *ent)
-{
+ClientCommand( edict_t *ent ) {
 	char *cmd;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	if (!ent->client)
-	{
+	if ( !ent->client ) {
 		return; /* not fully in game yet */
 	}
 
-	cmd = gi.argv(0);
+	cmd = gi.argv( 0 );
 
-	if (Q_stricmp(cmd, "players") == 0)
-	{
-		Cmd_Players_f(ent);
+	if ( Q_stricmp( cmd, "players" ) == 0 ) {
+		Cmd_Players_f( ent );
 		return;
 	}
 
-	if (Q_stricmp(cmd, "say") == 0)
-	{
-		Cmd_Say_f(ent, false);
+	if ( Q_stricmp( cmd, "say" ) == 0 ) {
+		Cmd_Say_f( ent, false );
 		return;
 	}
 
-	if (Q_stricmp(cmd, "score") == 0)
-	{
-		Cmd_Score_f(ent);
+	if ( Q_stricmp( cmd, "score" ) == 0 ) {
+		Cmd_Score_f( ent );
 		return;
 	}
 
-	if (Q_stricmp(cmd, "help") == 0)
-	{
-		Cmd_Score_f(ent);
+	if ( Q_stricmp( cmd, "help" ) == 0 ) {
+		Cmd_Score_f( ent );
 		return;
 	}
 
-	if (level.intermissiontime)
-	{
+	if ( level.intermissiontime ) {
 		return;
 	}
 
-	if (Q_stricmp(cmd, "god") == 0)
-	{
-		Cmd_God_f(ent);
+	if ( Q_stricmp( cmd, "god" ) == 0 ) {
+		Cmd_God_f( ent );
+	} else if ( Q_stricmp( cmd, "noclip" ) == 0 ) {
+		Cmd_Noclip_f( ent );
+	} else if ( Q_stricmp( cmd, "kill" ) == 0 ) {
+		Cmd_Kill_f( ent );
+	} else if ( Q_stricmp( cmd, "putaway" ) == 0 ) {
+		Cmd_PutAway_f( ent );
+	} else if ( Q_stricmp( cmd, "wave" ) == 0 ) {
+		Cmd_Wave_f( ent );
+	} else if ( Q_stricmp( cmd, "playerlist" ) == 0 ) {
+		Cmd_PlayerList_f( ent );
+	} else { /* anything that doesn't match a command will be a chat */
+		Cmd_Say_f( ent, true );
 	}
-	else if (Q_stricmp(cmd, "noclip") == 0)
-	{
-		Cmd_Noclip_f(ent);
-	}
-	else if (Q_stricmp(cmd, "kill") == 0)
-	{
-		Cmd_Kill_f(ent);
-	}
-	else if (Q_stricmp(cmd, "putaway") == 0)
-	{
-		Cmd_PutAway_f(ent);
-	}
-	else if (Q_stricmp(cmd, "wave") == 0)
-	{
-		Cmd_Wave_f(ent);
-	}
-	else if (Q_stricmp(cmd, "playerlist") == 0)
-	{
-		Cmd_PlayerList_f(ent);
-	}
-	else /* anything that doesn't match a command will be a chat */
-	{
-		Cmd_Say_f(ent, true);
-	}
+}
+
+void ServerCommand( void ) {
+	gi.cprintf( NULL, PRINT_HIGH, "Server commands unsupported\n" );
 }

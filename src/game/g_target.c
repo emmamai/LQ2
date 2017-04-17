@@ -33,24 +33,20 @@
  *  "style"	type byte
  */
 void
-Use_Target_Tent(edict_t *ent, edict_t *other /* unused */, edict_t *activator /* unused */)
-{
-	if (!ent)
-	{
+Use_Target_Tent( edict_t *ent, edict_t *other /* unused */, edict_t *activator /* unused */ ) {
+	if ( !ent ) {
 		return;
 	}
 
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(ent->style);
-	gi.WritePosition(ent->s.origin);
-	gi.multicast(ent->s.origin, MULTICAST_PVS);
+	gi.WriteByte( svc_temp_entity );
+	gi.WriteByte( ent->style );
+	gi.WritePosition( ent->s.origin );
+	gi.multicast( ent->s.origin, MULTICAST_PVS );
 }
 
 void
-SP_target_temp_entity(edict_t *ent)
-{
-	if (!ent)
-	{
+SP_target_temp_entity( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
@@ -79,91 +75,69 @@ SP_target_temp_entity(edict_t *ent)
  * Multiple identical looping sounds will just increase volume without any speed cost.
  */
 void
-Use_Target_Speaker(edict_t *ent, edict_t *other /* unused */, edict_t *activator /* unused */)
-{
+Use_Target_Speaker( edict_t *ent, edict_t *other /* unused */, edict_t *activator /* unused */ ) {
 	int chan;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	if (ent->spawnflags & 3)
-	{
+	if ( ent->spawnflags & 3 ) {
 		/* looping sound toggles */
-		if (ent->s.sound)
-		{
+		if ( ent->s.sound ) {
 			ent->s.sound = 0; /* turn it off */
-		}
-		else
-		{
+		} else {
 			ent->s.sound = ent->noise_index; /* start it */
 		}
-	}
-	else
-	{
+	} else {
 		/* normal sound */
-		if (ent->spawnflags & 4)
-		{
+		if ( ent->spawnflags & 4 ) {
 			chan = CHAN_VOICE | CHAN_RELIABLE;
-		}
-		else
-		{
+		} else {
 			chan = CHAN_VOICE;
 		}
 
 		/* use a positioned_sound, because this entity won't
 		   normally be sent to any clients because it is invisible */
-		gi.positioned_sound(ent->s.origin, ent, chan, ent->noise_index,
-				ent->volume, ent->attenuation, 0);
+		gi.positioned_sound( ent->s.origin, ent, chan, ent->noise_index,
+		                     ent->volume, ent->attenuation, 0 );
 	}
 }
 
 void
-SP_target_speaker(edict_t *ent)
-{
+SP_target_speaker( edict_t *ent ) {
 	char buffer[MAX_QPATH];
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	if (!st.noise)
-	{
-		gi.dprintf("target_speaker with no noise set at %s\n",
-				vtos(ent->s.origin));
+	if ( !st.noise ) {
+		gi.dprintf( "target_speaker with no noise set at %s\n",
+		            vtos( ent->s.origin ) );
 		return;
 	}
 
-	if (!strstr(st.noise, ".wav"))
-	{
-		Com_sprintf(buffer, sizeof(buffer), "%s.wav", st.noise);
-	}
-	else
-	{
-		Q_strlcpy(buffer, st.noise, sizeof(buffer));
+	if ( !strstr( st.noise, ".wav" ) ) {
+		Com_sprintf( buffer, sizeof( buffer ), "%s.wav", st.noise );
+	} else {
+		Q_strlcpy( buffer, st.noise, sizeof( buffer ) );
 	}
 
-	ent->noise_index = gi.soundindex(buffer);
+	ent->noise_index = gi.soundindex( buffer );
 
-	if (!ent->volume)
-	{
+	if ( !ent->volume ) {
 		ent->volume = 1.0;
 	}
 
-	if (!ent->attenuation)
-	{
+	if ( !ent->attenuation ) {
 		ent->attenuation = 1.0;
-	}
-	else if (ent->attenuation == -1) /* use -1 so 0 defaults to 1 */
-	{
+	} else if ( ent->attenuation == -1 ) { /* use -1 so 0 defaults to 1 */
 		ent->attenuation = 0;
 	}
 
 	/* check for prestarted looping sound */
-	if (ent->spawnflags & 1)
-	{
+	if ( ent->spawnflags & 1 ) {
 		ent->s.sound = ent->noise_index;
 	}
 
@@ -171,7 +145,7 @@ SP_target_speaker(edict_t *ent)
 
 	/* must link the entity so we get areas and clusters so
 	   the server can determine who to send updates to */
-	gi.linkentity(ent);
+	gi.linkentity( ent );
 }
 
 /* ========================================================== */
@@ -184,39 +158,34 @@ SP_target_speaker(edict_t *ent)
  * "dmg"		how much radius damage should be done, defaults to 0
  */
 void
-target_explosion_explode(edict_t *self)
-{
+target_explosion_explode( edict_t *self ) {
 	float save;
 
-	if (!self)
-	{
+	if ( !self ) {
 		return;
 	}
 
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_EXPLOSION1);
-	gi.WritePosition(self->s.origin);
-	gi.multicast(self->s.origin, MULTICAST_PHS);
+	gi.WriteByte( svc_temp_entity );
+	gi.WriteByte( TE_EXPLOSION1 );
+	gi.WritePosition( self->s.origin );
+	gi.multicast( self->s.origin, MULTICAST_PHS );
 
 	save = self->delay;
 	self->delay = 0;
-	G_UseTargets(self, self->activator);
+	G_UseTargets( self, self->activator );
 	self->delay = save;
 }
 
 void
-use_target_explosion(edict_t *self, edict_t *other /* unused */, edict_t *activator)
-{
+use_target_explosion( edict_t *self, edict_t *other /* unused */, edict_t *activator ) {
 	self->activator = activator;
 
-	if (!self || !activator)
-	{
+	if ( !self || !activator ) {
 		return;
 	}
 
-	if (!self->delay)
-	{
-		target_explosion_explode(self);
+	if ( !self->delay ) {
+		target_explosion_explode( self );
 		return;
 	}
 
@@ -225,10 +194,8 @@ use_target_explosion(edict_t *self, edict_t *other /* unused */, edict_t *activa
 }
 
 void
-SP_target_explosion(edict_t *ent)
-{
-	if (!ent)
-	{
+SP_target_explosion( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
@@ -243,63 +210,53 @@ SP_target_explosion(edict_t *ent)
  * Changes level to "map" when fired
  */
 void
-use_target_changelevel(edict_t *self, edict_t *other, edict_t *activator)
-{
-	if (!self || !other  || !activator)
-	{
+use_target_changelevel( edict_t *self, edict_t *other, edict_t *activator ) {
+	if ( !self || !other  || !activator ) {
 		return;
 	}
 
-	if (level.intermissiontime)
-	{
+	if ( level.intermissiontime ) {
 		return; /* already activated */
 	}
 
 	/* if noexit, do a ton of damage to other */
-	if (!((int)dmflags->value & DF_ALLOW_EXIT) &&
-		(other != world))
-	{
-		T_Damage(other, self, self, vec3_origin, other->s.origin,
-				vec3_origin, 10 * other->max_health, 1000,
-				0, MOD_EXIT);
+	if ( !( ( int )dmflags->value & DF_ALLOW_EXIT ) &&
+	        ( other != world ) ) {
+		T_Damage( other, self, self, vec3_origin, other->s.origin,
+		          vec3_origin, 10 * other->max_health, 1000,
+		          0, MOD_EXIT );
 		return;
 	}
 
 	/* if multiplayer, let everyone know who hit the exit */
-	if (activator && activator->client)
-	{
-		gi.bprintf(PRINT_HIGH, "%s exited the level.\n",
-				activator->client->pers.netname);
+	if ( activator && activator->client ) {
+		gi.bprintf( PRINT_HIGH, "%s exited the level.\n",
+		            activator->client->pers.netname );
 	}
 
 	/* if going to a new unit, clear cross triggers */
-	if (strstr(self->map, "*"))
-	{
-		game.serverflags &= ~(SFL_CROSS_TRIGGER_MASK);
+	if ( strstr( self->map, "*" ) ) {
+		game.serverflags &= ~( SFL_CROSS_TRIGGER_MASK );
 	}
 
-	BeginIntermission(self);
+	BeginIntermission( self );
 }
 
 void
-SP_target_changelevel(edict_t *ent)
-{
-	if (!ent)
-	{
+SP_target_changelevel( edict_t *ent ) {
+	if ( !ent ) {
 		return;
 	}
 
-	if (!ent->map)
-	{
-		gi.dprintf("target_changelevel with no map at %s\n", vtos(ent->s.origin));
-		G_FreeEdict(ent);
+	if ( !ent->map ) {
+		gi.dprintf( "target_changelevel with no map at %s\n", vtos( ent->s.origin ) );
+		G_FreeEdict( ent );
 		return;
 	}
 
 	/* Mapquirk for secret exists in fact1 and fact3 */
-	if ((Q_stricmp(level.mapname, "fact1") == 0) &&
-		   	(Q_stricmp(ent->map, "fact3") == 0))
-	{
+	if ( ( Q_stricmp( level.mapname, "fact1" ) == 0 ) &&
+	        ( Q_stricmp( ent->map, "fact3" ) == 0 ) ) {
 		ent->map = "fact3$secret1";
 	}
 
@@ -326,111 +283,34 @@ SP_target_changelevel(edict_t *ent)
  *          useful for lava/sparks
  */
 void
-use_target_splash(edict_t *self, edict_t *other /* unused */, edict_t *activator)
-{
-	if (!self || !activator)
-	{
+use_target_splash( edict_t *self, edict_t *other /* unused */, edict_t *activator ) {
+	if ( !self || !activator ) {
 		return;
 	}
 
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_SPLASH);
-	gi.WriteByte(self->count);
-	gi.WritePosition(self->s.origin);
-	gi.WriteDir(self->movedir);
-	gi.WriteByte(self->sounds);
-	gi.multicast(self->s.origin, MULTICAST_PVS);
+	gi.WriteByte( svc_temp_entity );
+	gi.WriteByte( TE_SPLASH );
+	gi.WriteByte( self->count );
+	gi.WritePosition( self->s.origin );
+	gi.WriteDir( self->movedir );
+	gi.WriteByte( self->sounds );
+	gi.multicast( self->s.origin, MULTICAST_PVS );
 }
 
 void
-SP_target_splash(edict_t *self)
-{
-	if (!self)
-	{
+SP_target_splash( edict_t *self ) {
+	if ( !self ) {
 		return;
 	}
 
 	self->use = use_target_splash;
-	G_SetMovedir(self->s.angles, self->movedir);
+	G_SetMovedir( self->s.angles, self->movedir );
 
-	if (!self->count)
-	{
+	if ( !self->count ) {
 		self->count = 32;
 	}
 
 	self->svflags = SVF_NOCLIENT;
-}
-
-/* ========================================================== */
-
-/*
- * QUAKED target_spawner (1 0 0) (-8 -8 -8) (8 8 8)
- * Set target to the type of entity you want spawned.
- * Useful for spawning monsters and gibs in the factory levels.
- *
- * For monsters:
- *  Set direction to the facing you want it to have.
- *
- * For gibs:
- *  Set direction if you want it moving and
- *  speed how fast it should be moving otherwise it
- *  will just be dropped
- */
-void ED_CallSpawn(edict_t *ent);
-
-void
-use_target_spawner(edict_t *self, edict_t *other /* unused */, edict_t *activator /* unused */)
-{
-	edict_t *ent;
-
-	if (!self)
-	{
-		return;
-	}
-
-	ent = G_Spawn();
-	ent->classname = self->target;
-	VectorCopy(self->s.origin, ent->s.origin);
-	VectorCopy(self->s.angles, ent->s.angles);
-	ED_CallSpawn(ent);
-	gi.unlinkentity(ent);
-	KillBox(ent);
-	gi.linkentity(ent);
-
-	if (self->speed)
-	{
-		VectorCopy(self->movedir, ent->velocity);
-	}
-}
-
-void
-SP_target_spawner(edict_t *self)
-{
-	vec3_t	forward;
-	vec3_t	fact2spawnpoint1 = {-1504,512,72};
-
-	if (!self)
-	{
-		return;
-	}
-
-	self->use = use_target_spawner;
-	self->svflags = SVF_NOCLIENT;
-
-	/* Maphack for the insane spawner in Mobs-Egerlings
-	   beloved fact2. Found in KMQuake2 */
-	if (!Q_stricmp(level.mapname, "fact2")
-		&& VectorCompare(self->s.origin, fact2spawnpoint1) )
-	{
-		VectorSet (forward, 0, 0, 1);
-		VectorMA (self->s.origin, -8, forward, self->s.origin);
-	}
-
-	if (self->speed)
-	{
-		G_SetMovedir(self->s.angles, self->movedir);
-		VectorScale(self->movedir, self->speed, self->movedir);
-	}
 }
 
 /* ========================================================== */
@@ -443,24 +323,20 @@ SP_target_spawner(edict_t *self)
  * delay, target, and killtarget also work.
  */
 void
-trigger_crosslevel_trigger_use(edict_t *self, edict_t *other /* unused */,
-		edict_t *activator)
-{
-	if (!self || !activator)
-	{
+trigger_crosslevel_trigger_use( edict_t *self, edict_t *other /* unused */,
+                                edict_t *activator ) {
+	if ( !self || !activator ) {
 		return;
 	}
 
 	game.serverflags |= self->spawnflags;
-	G_UseTargets (self, activator);
-	G_FreeEdict(self);
+	G_UseTargets ( self, activator );
+	G_FreeEdict( self );
 }
 
 void
-SP_target_crosslevel_trigger(edict_t *self)
-{
-	if (!self)
-	{
+SP_target_crosslevel_trigger( edict_t *self ) {
+	if ( !self ) {
 		return;
 	}
 
@@ -478,31 +354,25 @@ SP_target_crosslevel_trigger(edict_t *self)
  *         activated (default 1)
  */
 void
-target_crosslevel_target_think(edict_t *self)
-{
-	if (!self)
-	{
+target_crosslevel_target_think( edict_t *self ) {
+	if ( !self ) {
 		return;
 	}
 
-	if (self->spawnflags ==
-		(game.serverflags & SFL_CROSS_TRIGGER_MASK & self->spawnflags))
-	{
-		G_UseTargets(self, self);
-		G_FreeEdict(self);
+	if ( self->spawnflags ==
+	        ( game.serverflags & SFL_CROSS_TRIGGER_MASK & self->spawnflags ) ) {
+		G_UseTargets( self, self );
+		G_FreeEdict( self );
 	}
 }
 
 void
-SP_target_crosslevel_target(edict_t *self)
-{
-	if (!self)
-	{
+SP_target_crosslevel_target( edict_t *self ) {
+	if ( !self ) {
 		return;
 	}
 
-	if (!self->delay)
-	{
+	if ( !self->delay ) {
 		self->delay = 1;
 	}
 

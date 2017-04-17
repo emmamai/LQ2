@@ -31,108 +31,64 @@
 #define FRAME_IDLE_FIRST (FRAME_FIRE_LAST + 1)
 #define FRAME_DEACTIVATE_FIRST (FRAME_IDLE_LAST + 1)
 
-void
-P_ProjectSource(gclient_t *client, vec3_t point, vec3_t distance,
-		vec3_t forward, vec3_t right, vec3_t result)
-{
+void P_ProjectSource( gclient_t *client, vec3_t point, vec3_t distance,
+                      vec3_t forward, vec3_t right, vec3_t result ) {
 	vec3_t _distance;
 
-	if (!client)
-	{
+	if ( !client ) {
 		return;
 	}
 
-	VectorCopy(distance, _distance);
+	VectorCopy( distance, _distance );
 
-	if (client->pers.hand == LEFT_HANDED)
-	{
+	if ( client->pers.hand == LEFT_HANDED ) {
 		_distance[1] *= -1;
-	}
-	else if (client->pers.hand == CENTER_HANDED)
-	{
+	} else if ( client->pers.hand == CENTER_HANDED ) {
 		_distance[1] = 0;
 	}
 
-	G_ProjectSource(point, _distance, forward, right, result);
+	result[0] = point[0] + forward[0] * _distance[0] + right[0] * _distance[1];
+	result[1] = point[1] + forward[1] * _distance[0] + right[1] * _distance[1];
+	result[2] = point[2] + forward[2] * _distance[0] + right[2] * _distance[1] + _distance[2];
 }
 
-void
-ChangeWeapon(edict_t *ent)
-{
+void ChangeWeapon( edict_t *ent ) {
 	int i;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	ent->client->pers.lastweapon = ent->client->pers.weapon;
 	ent->client->pers.weapon = ent->client->newweapon;
-	ent->client->newweapon = NULL;
+	ent->client->newweapon = false;
 
 	/* set visible model */
-	if (ent->s.modelindex == 255)
-	{
-		if (ent->client->pers.weapon)
-		{
-			i = ((ent->client->pers.weapon->weapmodel & 0xff) << 8);
-		}
-		else
-		{
+	if ( ent->s.modelindex == 255 ) {
+		if ( ent->client->pers.weapon ) {
+			i = ( ( WEAP_SHOTGUN & 0xff ) << 8 );
+		} else {
 			i = 0;
 		}
-
-		ent->s.skinnum = (ent - g_edicts - 1) | i;
+		ent->s.skinnum = ( ent - g_edicts - 1 ) | i;
 	}
 
-	if (!ent->client->pers.weapon)
-	{
-		/* dead */
+	if ( !ent->client->pers.weapon ) { /* dead */
 		ent->client->ps.gunindex = 0;
 		return;
 	}
 
 	ent->client->weaponstate = WEAPON_ACTIVATING;
 	ent->client->ps.gunframe = 0;
-	ent->client->ps.gunindex = gi.modelindex(
-			ent->client->pers.weapon->view_model);
+	ent->client->ps.gunindex = gi.modelindex( "models/weapons/v_shotg/tris.md2" );
 
 	ent->client->anim_priority = ANIM_PAIN;
 
-	if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
-	{
+	if ( ent->client->ps.pmove.pm_flags & PMF_DUCKED ) {
 		ent->s.frame = FRAME_crpain1;
 		ent->client->anim_end = FRAME_crpain4;
-	}
-	else
-	{
+	} else {
 		ent->s.frame = FRAME_pain301;
 		ent->client->anim_end = FRAME_pain304;
-	}
-}
-
-/*
- * Called by ClientBeginServerFrame and ClientThink
- */
-void
-Think_Weapon(edict_t *ent)
-{
-	if (!ent)
-	{
-		return;
-	}
-
-	/* if just died, put the weapon away */
-	if (ent->health < 1)
-	{
-		ent->client->newweapon = NULL;
-		ChangeWeapon(ent);
-	}
-
-	/* call active weapon think routine */
-	if (ent->client->pers.weapon && ent->client->pers.weapon->weaponthink)
-	{
-		ent->client->pers.weapon->weaponthink(ent);
 	}
 }
 
@@ -141,40 +97,31 @@ Think_Weapon(edict_t *ent)
  * the basics of weapon thinking
  */
 void
-Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
-		int FRAME_IDLE_LAST, int FRAME_DEACTIVATE_LAST, int *pause_frames,
-		int *fire_frames, void (*fire)(edict_t *ent))
-{
+Weapon_Generic( edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
+                int FRAME_IDLE_LAST, int FRAME_DEACTIVATE_LAST, int *pause_frames,
+                int *fire_frames, void ( *fire )( edict_t *ent ) ) {
 	int n;
 
-	if (!ent || !fire_frames || !fire)
-	{
+	if ( !ent || !fire_frames || !fire ) {
 		return;
 	}
 
-	if (ent->deadflag || (ent->s.modelindex != 255)) /* VWep animations screw up corpses */
-	{
+	/* VWep animations screw up corpses */
+	if ( ent->deadflag || ( ent->s.modelindex != 255 ) ) {
 		return;
 	}
 
-	if (ent->client->weaponstate == WEAPON_DROPPING)
-	{
-		if (ent->client->ps.gunframe == FRAME_DEACTIVATE_LAST)
-		{
-			ChangeWeapon(ent);
+	if ( ent->client->weaponstate == WEAPON_DROPPING ) {
+		if ( ent->client->ps.gunframe == FRAME_DEACTIVATE_LAST ) {
+			ChangeWeapon( ent );
 			return;
-		}
-		else if ((FRAME_DEACTIVATE_LAST - ent->client->ps.gunframe) == 4)
-		{
+		} else if ( ( FRAME_DEACTIVATE_LAST - ent->client->ps.gunframe ) == 4 ) {
 			ent->client->anim_priority = ANIM_REVERSE;
 
-			if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
-			{
+			if ( ent->client->ps.pmove.pm_flags & PMF_DUCKED ) {
 				ent->s.frame = FRAME_crpain4 + 1;
 				ent->client->anim_end = FRAME_crpain1;
-			}
-			else
-			{
+			} else {
 				ent->s.frame = FRAME_pain304 + 1;
 				ent->client->anim_end = FRAME_pain301;
 			}
@@ -184,10 +131,8 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		return;
 	}
 
-	if (ent->client->weaponstate == WEAPON_ACTIVATING)
-	{
-		if (ent->client->ps.gunframe == FRAME_ACTIVATE_LAST)
-		{
+	if ( ent->client->weaponstate == WEAPON_ACTIVATING ) {
+		if ( ent->client->ps.gunframe == FRAME_ACTIVATE_LAST ) {
 			ent->client->weaponstate = WEAPON_READY;
 			ent->client->ps.gunframe = FRAME_IDLE_FIRST;
 			return;
@@ -197,22 +142,17 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		return;
 	}
 
-	if ((ent->client->newweapon) && (ent->client->weaponstate != WEAPON_FIRING))
-	{
+	if ( ( ent->client->newweapon ) && ( ent->client->weaponstate != WEAPON_FIRING ) ) {
 		ent->client->weaponstate = WEAPON_DROPPING;
 		ent->client->ps.gunframe = FRAME_DEACTIVATE_FIRST;
 
-		if ((FRAME_DEACTIVATE_LAST - FRAME_DEACTIVATE_FIRST) < 4)
-		{
+		if ( ( FRAME_DEACTIVATE_LAST - FRAME_DEACTIVATE_FIRST ) < 4 ) {
 			ent->client->anim_priority = ANIM_REVERSE;
 
-			if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
-			{
+			if ( ent->client->ps.pmove.pm_flags & PMF_DUCKED ) {
 				ent->s.frame = FRAME_crpain4 + 1;
 				ent->client->anim_end = FRAME_crpain1;
-			}
-			else
-			{
+			} else {
 				ent->s.frame = FRAME_pain304 + 1;
 				ent->client->anim_end = FRAME_pain301;
 			}
@@ -221,11 +161,8 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		return;
 	}
 
-	if (ent->client->weaponstate == WEAPON_READY)
-	{
-		if (((ent->client->latched_buttons |
-			  ent->client->buttons) & BUTTON_ATTACK))
-		{
+	if ( ent->client->weaponstate == WEAPON_READY ) {
+		if ( ( ( ent->client->latched_buttons | ent->client->buttons ) & BUTTON_ATTACK ) ) {
 			ent->client->latched_buttons &= ~BUTTON_ATTACK;
 
 			ent->client->ps.gunframe = FRAME_FIRE_FIRST;
@@ -234,33 +171,23 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 			/* start the animation */
 			ent->client->anim_priority = ANIM_ATTACK;
 
-			if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
-			{
+			if ( ent->client->ps.pmove.pm_flags & PMF_DUCKED ) {
 				ent->s.frame = FRAME_crattak1 - 1;
 				ent->client->anim_end = FRAME_crattak9;
-			}
-			else
-			{
+			} else {
 				ent->s.frame = FRAME_attack1 - 1;
 				ent->client->anim_end = FRAME_attack8;
 			}
-		}
-		else
-		{
-			if (ent->client->ps.gunframe == FRAME_IDLE_LAST)
-			{
+		} else {
+			if ( ent->client->ps.gunframe == FRAME_IDLE_LAST ) {
 				ent->client->ps.gunframe = FRAME_IDLE_FIRST;
 				return;
 			}
 
-			if (pause_frames)
-			{
-				for (n = 0; pause_frames[n]; n++)
-				{
-					if (ent->client->ps.gunframe == pause_frames[n])
-					{
-						if (randk() & 15)
-						{
+			if ( pause_frames ) {
+				for ( n = 0; pause_frames[n]; n++ ) {
+					if ( ent->client->ps.gunframe == pause_frames[n] ) {
+						if ( randk() & 15 ) {
 							return;
 						}
 					}
@@ -272,148 +199,118 @@ Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		}
 	}
 
-	if (ent->client->weaponstate == WEAPON_FIRING)
-	{
-		for (n = 0; fire_frames[n]; n++)
-		{
-			if (ent->client->ps.gunframe == fire_frames[n])
-			{
-				fire(ent);
+	if ( ent->client->weaponstate == WEAPON_FIRING ) {
+		for ( n = 0; fire_frames[n]; n++ ) {
+			if ( ent->client->ps.gunframe == fire_frames[n] ) {
+				fire( ent );
 				break;
 			}
 		}
 
-		if (!fire_frames[n])
-		{
+		if ( !fire_frames[n] ) {
 			ent->client->ps.gunframe++;
 		}
 
-		if (ent->client->ps.gunframe == FRAME_IDLE_FIRST + 1)
-		{
+		if ( ent->client->ps.gunframe == FRAME_IDLE_FIRST + 1 ) {
 			ent->client->weaponstate = WEAPON_READY;
 		}
 	}
 }
 
-/* ====================================================================== */
-
-/* SHOTGUN / SUPERSHOTGUN */
-
-void
-fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
-{
-	vec3_t from;
-	vec3_t end;
-	trace_t tr;
-	edict_t *ignore;
-	int mask;
-	int i;
-
-	if (!self)
-	{
-		return;
-	}
-
-	VectorMA(start, 8192, aimdir, end);
-	VectorCopy(start, from);
-	ignore = self;
-	mask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
-
-	while (ignore)
-	{
-		tr = gi.trace(from, NULL, NULL, end, ignore, mask);
-
-		if (tr.contents & (CONTENTS_SLIME | CONTENTS_LAVA))
-		{
-			mask &= ~(CONTENTS_SLIME | CONTENTS_LAVA);
-		}
-		else
-		{
-			if ((tr.ent->client) || (tr.ent->solid == SOLID_BBOX))
-			{
-				ignore = tr.ent;
-			}
-			else
-			{
-				ignore = NULL;
-			}
-
-			if ((tr.ent != self) && (tr.ent->takedamage))
-			{
-				T_Damage(tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal,
-						damage, kick, 0, MOD_RAILGUN);
-			}
-			else
-			{
-				ignore = NULL;
-			}
-		}
-
-		VectorCopy(tr.endpos, from);
-	}
-
-	/* send gun puff / flash */
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_BFG_LASER);
-	gi.WritePosition(start);
-	gi.WritePosition(tr.endpos);
-	gi.multicast(self->s.origin, MULTICAST_PHS);
-
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_SCREEN_SPARKS);
-	gi.WritePosition(tr.endpos);
-	gi.WriteDir(tr.plane.normal);
-	gi.multicast(tr.endpos, MULTICAST_PVS);
-}
-
-void
-weapon_shotgun_fire(edict_t *ent)
-{
+void weapon_fire( edict_t *ent ) {
 	vec3_t start;
 	vec3_t forward, right;
 	vec3_t offset;
+	vec3_t from, end;
+	trace_t tr;
+	edict_t *ignore;
+	int mask;
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	if (ent->client->ps.gunframe == 9)
-	{
+	if ( ent->client->ps.gunframe == 9 ) {
 		ent->client->ps.gunframe++;
 		return;
 	}
 
-	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	AngleVectors( ent->client->v_angle, forward, right, NULL );
 
-	VectorScale(forward, -2, ent->client->kick_origin);
+	VectorScale( forward, -2, ent->client->kick_origin );
 	ent->client->kick_angles[0] = -2;
 
-	VectorSet(offset, 0, 8, ent->viewheight - 8);
-	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+	VectorSet( offset, 0, 8, ent->viewheight - 8 );
+	P_ProjectSource( ent->client, ent->s.origin, offset, forward, right, start );
 
-	fire_rail(ent, start, forward, 200, 50);
+	VectorMA( start, 8192, forward, end );
+	VectorCopy( start, from );
+	ignore = ent;
+	mask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
 
-	/* send muzzle flash */
-	gi.WriteByte(svc_muzzleflash);
-	gi.WriteShort(ent - g_edicts);
-	gi.WriteByte(MZ_BLASTER2);
-	gi.multicast(ent->s.origin, MULTICAST_PVS);
+	while ( ignore ) {
+		tr = gi.trace( from, NULL, NULL, end, ignore, mask );
+
+		if ( tr.contents & ( CONTENTS_SLIME | CONTENTS_LAVA ) ) {
+			mask &= ~( CONTENTS_SLIME | CONTENTS_LAVA );
+		} else {
+			if ( ( tr.ent->client ) || ( tr.ent->solid == SOLID_BBOX ) ) {
+				ignore = tr.ent;
+			} else {
+				ignore = NULL;
+			}
+
+			if ( ( tr.ent != ent ) && ( tr.ent->takedamage ) ) {
+				T_Damage( tr.ent, ent, ent, forward, tr.endpos, tr.plane.normal,
+				          500, 50, 0, MOD_RAILGUN );
+			} else {
+				ignore = NULL;
+			}
+		}
+		VectorCopy( tr.endpos, from );
+	}
+
+	/* send gun puff / flash */
+	gi.WriteByte( svc_temp_entity );
+	gi.WriteByte( TE_BFG_LASER );
+	gi.WritePosition( start );
+	gi.WritePosition( tr.endpos );
+	gi.multicast( ent->s.origin, MULTICAST_PHS );
+
+	gi.WriteByte( svc_temp_entity );
+	gi.WriteByte( TE_SCREEN_SPARKS );
+	gi.WritePosition( tr.endpos );
+	gi.WriteDir( tr.plane.normal );
+	gi.multicast( tr.endpos, MULTICAST_PVS );
+
+	gi.WriteByte( svc_muzzleflash );
+	gi.WriteShort( ent - g_edicts );
+	gi.WriteByte( MZ_RAILGUN );
+	gi.multicast( ent->s.origin, MULTICAST_PVS );
 
 	ent->client->ps.gunframe++;
 }
 
-void
-Weapon_Shotgun(edict_t *ent)
-{
+/*
+ * Called by ClientBeginServerFrame and ClientThink
+ */
+void Think_Weapon( edict_t *ent ) {
 	static int pause_frames[] = {22, 28, 34, 0};
 	static int fire_frames[] = {8, 9, 0};
 
-	if (!ent)
-	{
+	if ( !ent ) {
 		return;
 	}
 
-	Weapon_Generic(ent, 7, 18, 36, 39, pause_frames,
-			fire_frames, weapon_shotgun_fire);
+	/* if just died, put the weapon away */
+	if ( ent->health < 1 ) {
+		ent->client->newweapon = false;
+		ChangeWeapon( ent );
+	}
+
+	/* call active weapon think routine */
+	if ( ent->client->pers.weapon ) {
+		Weapon_Generic( ent, 7, 18, 36, 39, pause_frames,
+		                fire_frames, weapon_fire );
+	}
 }

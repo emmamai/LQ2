@@ -561,12 +561,10 @@ GAME_OBJS_ = \
 	src/game/g_cmds.o \
 	src/game/g_combat.o \
 	src/game/g_func.o \
-	src/game/g_items.o \
 	src/game/g_main.o \
 	src/game/g_misc.o \
 	src/game/g_phys.o \
 	src/game/g_spawn.o \
-	src/game/g_svcmds.o \
 	src/game/g_target.o \
 	src/game/g_trigger.o \
 	src/game/g_utils.o \
