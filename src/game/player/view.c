@@ -73,8 +73,6 @@ P_DamageFeedback(edict_t *player)
 	float realcount, count, kick;
 	vec3_t v;
 	int r, l;
-	static vec3_t power_color = {0.0, 1.0, 0.0};
-	static vec3_t acolor = {1.0, 1.0, 1.0};
 	static vec3_t bcolor = {1.0, 0.0, 0.0};
 
 	if (!player)
@@ -92,15 +90,8 @@ P_DamageFeedback(edict_t *player)
 		client->ps.stats[STAT_FLASHES] |= 1;
 	}
 
-	if (client->damage_armor && !(player->flags & FL_GODMODE) &&
-		(client->invincible_framenum <= level.framenum))
-	{
-		client->ps.stats[STAT_FLASHES] |= 2;
-	}
-
 	/* total points of damage shot at the player this frame */
-	count =
-		(client->damage_blood + client->damage_armor + client->damage_parmor);
+	count = (client->damage_blood);
 
 	if (count == 0)
 	{
@@ -199,16 +190,6 @@ P_DamageFeedback(edict_t *player)
 	   on how much was absorbed by different armors */
 	VectorClear(v);
 
-	if (client->damage_parmor)
-	{
-		VectorMA(v, (float)client->damage_parmor / realcount, power_color, v);
-	}
-
-	if (client->damage_armor)
-	{
-		VectorMA(v, (float)client->damage_armor / realcount, acolor, v);
-	}
-
 	if (client->damage_blood)
 	{
 		VectorMA(v, (float)client->damage_blood / realcount, bcolor, v);
@@ -247,8 +228,6 @@ P_DamageFeedback(edict_t *player)
 
 	/* clear totals */
 	client->damage_blood = 0;
-	client->damage_armor = 0;
-	client->damage_parmor = 0;
 	client->damage_knockback = 0;
 }
 
@@ -696,7 +675,7 @@ P_WorldEffects(void)
 		current_player->flags &= ~FL_INWATER;
 	}
 
-	/* check for head just going under moove^^water */
+	/* check for head just going underwater */
 	if ((old_waterlevel != 3) && (waterlevel == 3))
 	{
 		gi.sound(current_player, CHAN_BODY, gi.soundindex(

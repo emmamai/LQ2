@@ -139,15 +139,6 @@ typedef enum
 	MOVETYPE_BOUNCE
 } movetype_t;
 
-typedef struct
-{
-	int base_count;
-	int max_count;
-	float normal_protection;
-	float energy_protection;
-	int armor;
-} gitem_armor_t;
-
 #define IT_WEAPON 1  /* use makes active weapon */
 #define IT_AMMO 2
 #define IT_ARMOR 4
@@ -156,17 +147,7 @@ typedef struct
 #define IT_POWERUP 32
 
 /* gitem_t->weapmodel for weapons indicates model index */
-#define WEAP_BLASTER 1
-#define WEAP_SHOTGUN 2
-#define WEAP_SUPERSHOTGUN 3
-#define WEAP_MACHINEGUN 4
-#define WEAP_CHAINGUN 5
-#define WEAP_GRENADES 6
-#define WEAP_GRENADELAUNCHER 7
-#define WEAP_ROCKETLAUNCHER 8
-#define WEAP_HYPERBLASTER 9
-#define WEAP_RAILGUN 10
-#define WEAP_BFG 11
+#define WEAP_SHOTGUN 1
 
 typedef struct gitem_s
 {
@@ -496,14 +477,6 @@ void T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 #define DAMAGE_BULLET 0x00000010 /* damage is from a bullet (used for ricochets) */
 #define DAMAGE_NO_PROTECTION 0x00000020 /* armor, shields, invulnerability, and godmode have no effect */
 
-#define DEFAULT_BULLET_HSPREAD 300
-#define DEFAULT_BULLET_VSPREAD 500
-#define DEFAULT_SHOTGUN_HSPREAD 1000
-#define DEFAULT_SHOTGUN_VSPREAD 500
-#define DEFAULT_DEATHMATCH_SHOTGUN_COUNT 12
-#define DEFAULT_SHOTGUN_COUNT 12
-#define DEFAULT_SSHOTGUN_COUNT 20
-
 /* g_misc.c */
 void ThrowClientHead(edict_t *self, int damage);
 void BecomeExplosion1(edict_t *self);
@@ -626,8 +599,6 @@ struct gclient_s
 
 	/* sum up damage over an entire frame, so
 	   shotgun blasts give a single big kick */
-	int damage_armor; /* damage absorbed by armor */
-	int damage_parmor; /* damage absorbed by power armor */
 	int damage_blood; /* damage taken out of health */
 	int damage_knockback; /* impact damage */
 	vec3_t damage_from; /* origin for vector calculation */
@@ -759,21 +730,16 @@ struct edict_s
 	float pain_debounce_time;
 	float damage_debounce_time;
 	float fly_sound_debounce_time;
-	float last_move_time;
 
 	int health;
 	int max_health;
-	int gib_health;
 	int deadflag;
-	int show_hostile;
 
 	char *map; /* target_changelevel */
 
 	int viewheight; /* height above origin where eyesight is determined */
 	int takedamage;
 	int dmg;
-	int radius_dmg;
-	float dmg_radius;
 	int sounds; /* make this a spawntemp var? */
 	int count;
 

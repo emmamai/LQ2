@@ -307,6 +307,7 @@ fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 	trace_t tr;
 	edict_t *ignore;
 	int mask;
+	int i;
 
 	if (!self)
 	{
@@ -396,7 +397,7 @@ weapon_shotgun_fire(edict_t *ent)
 	/* send muzzle flash */
 	gi.WriteByte(svc_muzzleflash);
 	gi.WriteShort(ent - g_edicts);
-	gi.WriteByte(MZ_RAILGUN);
+	gi.WriteByte(MZ_BLASTER2);
 	gi.multicast(ent->s.origin, MULTICAST_PVS);
 
 	ent->client->ps.gunframe++;

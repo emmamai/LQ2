@@ -1443,23 +1443,12 @@ void
 Touch_DoorTrigger(edict_t *self, edict_t *other, cplane_t *plane /* unused */,
 		csurface_t *surf /* unused */)
 {
-	if (!self || !other)
+	if (!self || !other || !other->client)
 	{
 		return;
 	}
 
 	if (other->health <= 0)
-	{
-		return;
-	}
-
-	if (!(other->svflags & SVF_MONSTER) && (!other->client))
-	{
-		return;
-	}
-
-	if ((self->owner->spawnflags & DOOR_NOMONSTER) &&
-		(other->svflags & SVF_MONSTER))
 	{
 		return;
 	}

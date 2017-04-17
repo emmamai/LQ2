@@ -501,7 +501,7 @@ player_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
 	VectorClear(self->avelocity);
 
 	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WriteByte(TE_BFG_BIGEXPLOSION);
 	gi.WritePosition(self->s.origin);
 	gi.multicast(self->s.origin, MULTICAST_PVS);
 
@@ -535,7 +535,11 @@ player_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
 
 	/* gib */
 	gi.sound(self, CHAN_BODY, gi.soundindex(
-					"misc/udeath.wav"), 1, ATTN_NORM, 0);
+					"world/spark3.wav"), 1, ATTN_NORM, 0);
+	gi.sound(self, CHAN_BODY, gi.soundindex(
+					"world/spark3.wav"), 1, ATTN_NORM, 0);
+	gi.sound(self, CHAN_BODY, gi.soundindex(
+					"world/spark3.wav"), 1, ATTN_NORM, 0);
 
 	ThrowClientHead(self, damage);
 

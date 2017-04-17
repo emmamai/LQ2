@@ -456,24 +456,6 @@ SpawnEntities(const char *mapname, char *entities, const char *spawnpoint)
 char *dm_statusbar =
 	"yb	-24 "
 
-/* selected item */
-	"if 6 "
-	"	xv	296 "
-	"	pic 6 "
-	"endif "
-
-	"yb	-50 "
-
-/* picked up item */
-	"if 7 "
-	"	xv	0 "
-	"	pic 7 "
-	"	xv	26 "
-	"	yb	-42 "
-	"	stat_string 8 "
-	"	yb	-50 "
-	"endif "
-
 /* timer */
 	"if 9 "
 	"	xv	246 "
@@ -567,7 +549,6 @@ SP_worldspawn(edict_t *ent)
 
 	gi.configstring(CS_MAXCLIENTS, va("%i", (int)(maxclients->value)));
 
-
 	gi.configstring(CS_STATUSBAR, dm_statusbar);
 
 
@@ -590,14 +571,6 @@ SP_worldspawn(edict_t *ent)
 	gi.soundindex("player/lava1.wav");
 	gi.soundindex("player/lava2.wav");
 
-	gi.soundindex("misc/pc_up.wav");
-	gi.soundindex("misc/talk1.wav");
-
-	gi.soundindex("misc/udeath.wav");
-
-	/* gibs */
-	gi.soundindex("items/respawn1.wav");
-
 	/* sexed sounds */
 	gi.soundindex("*death1.wav");
 	gi.soundindex("*death2.wav");
@@ -619,17 +592,7 @@ SP_worldspawn(edict_t *ent)
 
 	/* sexed models: THIS ORDER MUST MATCH THE DEFINES IN g_local.h
 	   you can add more, max 19 */
-	gi.modelindex("#w_blaster.md2");
 	gi.modelindex("#w_shotgun.md2");
-	gi.modelindex("#w_sshotgun.md2");
-	gi.modelindex("#w_machinegun.md2");
-	gi.modelindex("#w_chaingun.md2");
-	gi.modelindex("#a_grenades.md2");
-	gi.modelindex("#w_glauncher.md2");
-	gi.modelindex("#w_rlauncher.md2");
-	gi.modelindex("#w_hyperblaster.md2");
-	gi.modelindex("#w_railgun.md2");
-	gi.modelindex("#w_bfg.md2");
 
 	/* ------------------- */
 
@@ -644,23 +607,13 @@ SP_worldspawn(edict_t *ent)
 	gi.soundindex("player/u_breath1.wav");
 	gi.soundindex("player/u_breath2.wav");
 
-	gi.soundindex("items/pkup.wav"); /* bonus item pickup */
 	gi.soundindex("world/land.wav"); /* landing thud */
 	gi.soundindex("misc/h2ohit1.wav"); /* landing splash */
 
-	gi.soundindex("items/damage.wav");
 	gi.soundindex("items/protect.wav");
 	gi.soundindex("items/protect4.wav");
 
 	gi.soundindex("infantry/inflies1.wav");
-
-	sm_meat_index = gi.modelindex("models/objects/gibs/sm_meat/tris.md2");
-	gi.modelindex("models/objects/gibs/arm/tris.md2");
-	gi.modelindex("models/objects/gibs/bone/tris.md2");
-	gi.modelindex("models/objects/gibs/bone2/tris.md2");
-	gi.modelindex("models/objects/gibs/chest/tris.md2");
-	gi.modelindex("models/objects/gibs/skull/tris.md2");
-	gi.modelindex("models/objects/gibs/head2/tris.md2");
 
 	/* Setup light animation tables. 'a'
 	   is total darkness, 'z' is doublebright. */
