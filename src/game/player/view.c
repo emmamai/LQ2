@@ -910,14 +910,7 @@ void ClientEndServerFrame( edict_t *ent ) {
 	   can be accurately determined */
 	SV_CalcBlend( ent );
 
-	/* chase cam stuff */
-	if ( ent->client->resp.spectator ) {
-		G_SetSpectatorStats( ent );
-	} else {
-		G_SetStats( ent );
-	}
-
-	G_CheckChaseStats( ent );
+	G_SetStats( ent );
 
 	G_SetClientEvent( ent );
 

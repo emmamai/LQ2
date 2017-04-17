@@ -169,7 +169,7 @@ void DeathmatchScoreboardMessage( edict_t *ent, edict_t *killer ) {
 	for ( i = 0; i < game.maxclients; i++ ) {
 		cl_ent = g_edicts + 1 + i;
 
-		if ( !cl_ent->inuse || game.clients[i].resp.spectator ) {
+		if ( !cl_ent->inuse  ) {
 			continue;
 		}
 
@@ -277,54 +277,4 @@ void G_SetStats( edict_t *ent ) {
 
 	/* frags */
 	ent->client->ps.stats[STAT_FRAGS] = ent->client->resp.score;
-
-	ent->client->ps.stats[STAT_SPECTATOR] = 0;
-}
-
-void G_CheckChaseStats( edict_t *ent ) {
-	int i;
-	gclient_t *cl;
-
-	if ( !ent ) {
-		return;
-	}
-
-	for ( i = 1; i <= maxclients->value; i++ ) {
-		cl = g_edicts[i].client;
-
-		if ( !g_edicts[i].inuse || ( cl->chase_target != ent ) ) {
-			continue;
-		}
-
-		memcpy( cl->ps.stats, ent->client->ps.stats, sizeof( cl->ps.stats ) );
-		G_SetSpectatorStats( g_edicts + i );
-	}
-}
-
-void G_SetSpectatorStats( edict_t *ent ) {
-	if ( !ent ) {
-		return;
-	}
-
-	gclient_t *cl = ent->client;
-
-	if ( !cl->chase_target ) {
-		G_SetStats( ent );
-	}
-
-	cl->ps.stats[STAT_SPECTATOR] = 1;
-
-	/* layouts are independant in spectator */
-	cl->ps.stats[STAT_LAYOUTS] = 0;
-
-	if ( ( cl->pers.health <= 0 ) || level.intermissiontime || cl->showscores ) {
-		cl->ps.stats[STAT_LAYOUTS] |= 1;
-	}
-
-	if ( cl->chase_target && cl->chase_target->inuse ) {
-		cl->ps.stats[STAT_CHASE] = CS_PLAYERSKINS +
-		                           ( cl->chase_target - g_edicts ) - 1;
-	} else {
-		cl->ps.stats[STAT_CHASE] = 0;
-	}
 }

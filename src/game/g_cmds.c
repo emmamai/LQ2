@@ -101,8 +101,7 @@ void Cmd_Kill_f( edict_t *ent ) {
 		return;
 	}
 
-	if ( ( ( level.time - ent->client->respawn_time ) < 5 ) ||
-	        ( ent->client->resp.spectator ) ) {
+	if ( ( level.time - ent->client->respawn_time ) < 5 ) {
 		return;
 	}
 
@@ -110,14 +109,6 @@ void Cmd_Kill_f( edict_t *ent ) {
 	ent->health = 0;
 	meansOfDeath = MOD_SUICIDE;
 	player_die( ent, ent, ent, 100000, vec3_origin );
-}
-
-void Cmd_PutAway_f( edict_t *ent ) {
-	if ( !ent ) {
-		return;
-	}
-
-	ent->client->showscores = false;
 }
 
 int PlayerSort( void const *a, void const *b ) {
@@ -187,62 +178,11 @@ void Cmd_Players_f( edict_t *ent ) {
 	gi.cprintf( ent, PRINT_HIGH, "%s\n%i players\n", large, count );
 }
 
-void Cmd_Wave_f( edict_t *ent ) {
-	int i;
-
-	if ( !ent ) {
-		return;
-	}
-
-	i = ( int )strtol( gi.argv( 1 ), ( char ** )NULL, 10 );
-
-	/* can't wave when ducked */
-	if ( ent->client->ps.pmove.pm_flags & PMF_DUCKED ) {
-		return;
-	}
-
-	if ( ent->client->anim_priority > ANIM_WAVE ) {
-		return;
-	}
-
-	ent->client->anim_priority = ANIM_WAVE;
-
-	switch ( i ) {
-	case 0:
-		gi.cprintf( ent, PRINT_HIGH, "flipoff\n" );
-		ent->s.frame = FRAME_flip01 - 1;
-		ent->client->anim_end = FRAME_flip12;
-		break;
-	case 1:
-		gi.cprintf( ent, PRINT_HIGH, "salute\n" );
-		ent->s.frame = FRAME_salute01 - 1;
-		ent->client->anim_end = FRAME_salute11;
-		break;
-	case 2:
-		gi.cprintf( ent, PRINT_HIGH, "taunt\n" );
-		ent->s.frame = FRAME_taunt01 - 1;
-		ent->client->anim_end = FRAME_taunt17;
-		break;
-	case 3:
-		gi.cprintf( ent, PRINT_HIGH, "wave\n" );
-		ent->s.frame = FRAME_wave01 - 1;
-		ent->client->anim_end = FRAME_wave11;
-		break;
-	case 4:
-	default:
-		gi.cprintf( ent, PRINT_HIGH, "point\n" );
-		ent->s.frame = FRAME_point01 - 1;
-		ent->client->anim_end = FRAME_point12;
-		break;
-	}
-}
-
 void Cmd_Say_f( edict_t *ent, qboolean arg0 ) {
-	int i, j;
+	int i;
 	edict_t *other;
 	char *p;
 	char text[2048];
-	gclient_t *cl;
 
 	if ( !ent ) {
 		return;
@@ -276,41 +216,12 @@ void Cmd_Say_f( edict_t *ent, qboolean arg0 ) {
 
 	strcat( text, "\n" );
 
-	if ( flood_msgs->value ) {
-		cl = ent->client;
-
-		if ( level.time < cl->flood_locktill ) {
-			gi.cprintf( ent, PRINT_HIGH, "You can't talk for %d more seconds\n",
-			            ( int )( cl->flood_locktill - level.time ) );
-			return;
-		}
-
-		i = cl->flood_whenhead - flood_msgs->value + 1;
-
-		if ( i < 0 ) {
-			i = ( sizeof( cl->flood_when ) / sizeof( cl->flood_when[0] ) ) + i;
-		}
-
-		if ( cl->flood_when[i] &&
-		        ( level.time - cl->flood_when[i] < flood_persecond->value ) ) {
-			cl->flood_locktill = level.time + flood_waitdelay->value;
-			gi.cprintf( ent, PRINT_CHAT,
-			            "Flood protection:  You can't talk for %d seconds.\n",
-			            ( int )flood_waitdelay->value );
-			return;
-		}
-
-		cl->flood_whenhead = ( cl->flood_whenhead + 1 ) %
-		                     ( sizeof( cl->flood_when ) / sizeof( cl->flood_when[0] ) );
-		cl->flood_when[cl->flood_whenhead] = level.time;
-	}
-
 	if ( dedicated->value ) {
 		gi.cprintf( NULL, PRINT_CHAT, "%s", text );
 	}
 
-	for ( j = 1; j <= game.maxclients; j++ ) {
-		other = &g_edicts[j];
+	for ( i = 1; i <= game.maxclients; i++ ) {
+		other = &g_edicts[i];
 
 		if ( !other->inuse ) {
 			continue;
@@ -348,7 +259,7 @@ void Cmd_PlayerList_f( edict_t *ent ) {
 		             e2->client->ping,
 		             e2->client->resp.score,
 		             e2->client->pers.netname,
-		             e2->client->resp.spectator ? " (spectator)" : "" );
+		             "" );
 
 		if ( strlen( text ) + strlen( st ) > sizeof( text ) - 50 ) {
 			strcpy( text + strlen( text ), "And more...\n" );
@@ -405,10 +316,6 @@ void ClientCommand( edict_t *ent ) {
 		Cmd_Noclip_f( ent );
 	} else if ( Q_stricmp( cmd, "kill" ) == 0 ) {
 		Cmd_Kill_f( ent );
-	} else if ( Q_stricmp( cmd, "putaway" ) == 0 ) {
-		Cmd_PutAway_f( ent );
-	} else if ( Q_stricmp( cmd, "wave" ) == 0 ) {
-		Cmd_Wave_f( ent );
 	} else if ( Q_stricmp( cmd, "playerlist" ) == 0 ) {
 		Cmd_PlayerList_f( ent );
 	} else { /* anything that doesn't match a command will be a chat */

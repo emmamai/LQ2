@@ -401,22 +401,6 @@ char *dm_statusbar =
     "xr	-50 "
     "yt 2 "
     "num 2 14 "
-
-    /* spectator */
-    "if 17 "
-    "xv 0 "
-    "yb -58 "
-    "string2 \"SPECTATOR MODE\" "
-    "endif "
-
-    /* chase camera */
-    "if 16 "
-    "xv 0 "
-    "yb -68 "
-    "string \"Chasing\" "
-    "xv 64 "
-    "stat_string 16 "
-    "endif "
     ;
 
 /*QUAKED worldspawn (0 0 0) ?
