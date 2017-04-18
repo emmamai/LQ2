@@ -306,6 +306,11 @@ void ClientCommand( edict_t *ent ) {
 		return;
 	}
 
+	if ( Q_stricmp( cmd, "inven" ) == 0 ) {
+		Cmd_Score_f( ent );
+		return;
+	}
+
 	if ( level.intermissiontime ) {
 		return;
 	}
@@ -319,10 +324,11 @@ void ClientCommand( edict_t *ent ) {
 	} else if ( Q_stricmp( cmd, "playerlist" ) == 0 ) {
 		Cmd_PlayerList_f( ent );
 	} else { /* anything that doesn't match a command will be a chat */
-		Cmd_Say_f( ent, true );
+		//Cmd_Say_f( ent, true );
+		gi.cprintf( ent, PRINT_HIGH, "Unknown command %s\n", cmd );
 	}
 }
 
 void ServerCommand( void ) {
-	gi.cprintf( NULL, PRINT_HIGH, "Server commands unsupported\n" );
+	gi.cprintf( sv, PRINT_HIGH, "Server commands unsupported\n" );
 }
