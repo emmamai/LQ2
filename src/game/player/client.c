@@ -113,6 +113,7 @@ qboolean IsNeutral( edict_t *ent ) {
 
 void ClientObituary( edict_t *self, edict_t *inflictor /* unused */, edict_t *attacker ) {
 	int mod;
+	int left;
 	char *message;
 	char *message2;
 	qboolean ff;
@@ -209,6 +210,13 @@ void ClientObituary( edict_t *self, edict_t *inflictor /* unused */, edict_t *at
 				attacker->client->resp.score--;
 			} else {
 				attacker->client->resp.score++;
+				if ( ( left = (int) fraglimit->value - ++attacker->client->resp.score ) <= 3 ) {
+					if ( left == 1 ) {
+						gi.bprintf( PRINT_HIGH, "%i frag left\n", left );
+					} else {
+						gi.bprintf( PRINT_HIGH, "%i frags left\n", left );
+					}
+				}
 			}
 			return;
 		}

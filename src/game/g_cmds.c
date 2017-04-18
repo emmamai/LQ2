@@ -289,24 +289,16 @@ void ClientCommand( edict_t *ent ) {
 	if ( Q_stricmp( cmd, "players" ) == 0 ) {
 		Cmd_Players_f( ent );
 		return;
-	}
-
-	if ( Q_stricmp( cmd, "say" ) == 0 ) {
+	} else if ( Q_stricmp( cmd, "say" ) == 0 ) {
 		Cmd_Say_f( ent, false );
 		return;
-	}
-
-	if ( Q_stricmp( cmd, "score" ) == 0 ) {
+	} else if ( Q_stricmp( cmd, "score" ) == 0 ) {
 		Cmd_Score_f( ent );
 		return;
-	}
-
-	if ( Q_stricmp( cmd, "help" ) == 0 ) {
+	} else if ( Q_stricmp( cmd, "help" ) == 0 ) {
 		Cmd_Score_f( ent );
 		return;
-	}
-
-	if ( Q_stricmp( cmd, "inven" ) == 0 ) {
+	} else if ( Q_stricmp( cmd, "inven" ) == 0 ) {
 		Cmd_Score_f( ent );
 		return;
 	}
@@ -330,5 +322,5 @@ void ClientCommand( edict_t *ent ) {
 }
 
 void ServerCommand( void ) {
-	gi.cprintf( sv, PRINT_HIGH, "Server commands unsupported\n" );
+	gi.cprintf( NULL, PRINT_HIGH, "Server commands unsupported\n" );
 }

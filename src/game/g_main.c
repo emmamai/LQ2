@@ -276,11 +276,16 @@ void CheckDMRules( void ) {
 	gclient_t *cl;
 
 	if ( level.intermissiontime ) {
+		gi.cprintf( NULL, PRINT_HIGH, "Returning - in intermission\n" );
 		return;
 	}
 
 	if ( timelimit->value ) {
-		if ( level.time >= timelimit->value * 60 ) {
+		if ( level.time == 5.f * 60 ) {
+			gi.bprintf( PRINT_HIGH, "Five minute warning." );
+		} else if ( level.time == 1.f * 60 ) {
+			gi.bprintf( PRINT_HIGH, "One minute warning." );
+		} else if ( level.time >= timelimit->value * 60 ) {
 			gi.bprintf( PRINT_HIGH, "Timelimit hit.\n" );
 			EndDMLevel();
 			return;
@@ -301,6 +306,8 @@ void CheckDMRules( void ) {
 				return;
 			}
 		}
+	} else {
+		gi.cprintf( NULL, PRINT_HIGH, "Fraglimit not set\n" );
 	}
 }
 
