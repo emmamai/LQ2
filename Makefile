@@ -558,19 +558,12 @@ GAME_OBJS_ = \
 	src/common/shared/rand.o \
 	src/common/shared/shared.o \
 	src/game/g_cmds.o \
-	src/game/g_combat.o \
-	src/game/g_func.o \
 	src/game/g_main.o \
-	src/game/g_misc.o \
 	src/game/g_phys.o \
 	src/game/g_spawn.o \
-	src/game/g_target.o \
-	src/game/g_trigger.o \
 	src/game/g_utils.o \
 	src/game/player/client.o \
-	src/game/player/hud.o \
 	src/game/player/view.o \
-	src/game/player/weapon.o \
 	src/game/savegame/savegame.o \
 	
 

@@ -258,7 +258,6 @@ extern cvar_t *skill;
 extern cvar_t *fraglimit;
 extern cvar_t *timelimit;
 extern cvar_t *password;
-extern cvar_t *spectator_password;
 extern cvar_t *needpass;
 extern cvar_t *g_select_empty;
 extern cvar_t *dedicated;
@@ -278,11 +277,6 @@ extern cvar_t *bob_roll;
 
 extern cvar_t *sv_cheats;
 extern cvar_t *maxclients;
-extern cvar_t *maxspectators;
-
-extern cvar_t *flood_msgs;
-extern cvar_t *flood_persecond;
-extern cvar_t *flood_waitdelay;
 
 extern cvar_t *sv_maplist;
 
@@ -383,8 +377,6 @@ void ClientEndServerFrame( edict_t *ent );
 /* p_hud.c */
 void MoveClientToIntermission( edict_t *client );
 void G_SetStats( edict_t *ent );
-void G_SetSpectatorStats( edict_t *ent );
-void G_CheckChaseStats( edict_t *ent );
 void DeathmatchScoreboardMessage( edict_t *client, edict_t *killer );
 
 /* g_phys.c */
@@ -393,12 +385,6 @@ void G_RunEntity( edict_t *ent );
 /* g_main.c */
 void SaveClientData( void );
 void FetchClientEntData( edict_t *ent );
-
-/* g_chase.c */
-void UpdateChaseCam( edict_t *ent );
-void ChaseNext( edict_t *ent );
-void ChasePrev( edict_t *ent );
-void GetChaseTarget( edict_t *ent );
 
 /* ============================================================================ */
 
@@ -429,8 +415,6 @@ typedef struct {
 	int selected_item;
 
 	qboolean weapon;
-
-	qboolean spectator; /* client is a spectator */
 } client_persistant_t;
 
 /* client data that stays across deathmatch respawns */
@@ -439,8 +423,6 @@ typedef struct {
 	int enterframe; /* level.framenum the client entered the game */
 	int score; /* frags, etc */
 	vec3_t cmd_angles; /* angles sent over in the last command */
-
-	qboolean spectator; /* client is a spectator */
 } client_respawn_t;
 
 /* this structure is cleared on each PutClientInServer(),
@@ -497,14 +479,7 @@ struct gclient_s {
 	/* powerup timers */
 	float invincible_framenum;
 
-	float flood_locktill; /* locked from talking */
-	float flood_when[10]; /* when messages were said */
-	int flood_whenhead; /* head pointer for when said */
-
 	float respawn_time; /* can respawn when time > this */
-
-	edict_t *chase_target; /* player we are chasing */
-	qboolean update_chase; /* need to update chase info? */
 };
 
 struct edict_s {

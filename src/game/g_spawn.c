@@ -31,116 +31,15 @@ typedef struct {
 	void ( *spawn )( edict_t *ent );
 } spawn_t;
 
-void SP_info_player_start( edict_t *ent );
 void SP_info_player_deathmatch( edict_t *ent );
-void SP_info_player_intermission( edict_t *ent );
-
-void SP_func_plat( edict_t *ent );
-void SP_func_rotating( edict_t *ent );
-void SP_func_button( edict_t *ent );
-void SP_func_door( edict_t *ent );
-void SP_func_door_secret( edict_t *ent );
-void SP_func_door_rotating( edict_t *ent );
-void SP_func_water( edict_t *ent );
-void SP_func_train( edict_t *ent );
-void SP_func_conveyor( edict_t *self );
-void SP_func_wall( edict_t *self );
-void SP_func_object( edict_t *self );
-void SP_func_timer( edict_t *self );
-void SP_func_areaportal( edict_t *ent );
-void SP_func_clock( edict_t *ent );
-void SP_func_killbox( edict_t *ent );
-
-void SP_trigger_always( edict_t *ent );
-void SP_trigger_once( edict_t *ent );
-void SP_trigger_multiple( edict_t *ent );
-void SP_trigger_relay( edict_t *ent );
-void SP_trigger_push( edict_t *ent );
-void SP_trigger_hurt( edict_t *ent );
-void SP_trigger_counter( edict_t *ent );
-void SP_trigger_elevator( edict_t *ent );
-void SP_trigger_gravity( edict_t *ent );
-
-void SP_target_temp_entity( edict_t *ent );
-void SP_target_speaker( edict_t *ent );
-void SP_target_explosion( edict_t *ent );
-void SP_target_changelevel( edict_t *ent );
-void SP_target_secret( edict_t *ent );
-void SP_target_goal( edict_t *ent );
-void SP_target_splash( edict_t *ent );
-void SP_target_crosslevel_trigger( edict_t *ent );
-void SP_target_crosslevel_target( edict_t *ent );
-void SP_target_character( edict_t *ent );
-void SP_target_string( edict_t *ent );
 
 void SP_worldspawn( edict_t *ent );
-void SP_viewthing( edict_t *ent );
 
-void SP_light( edict_t *self );
-void SP_light_mine1( edict_t *ent );
-void SP_light_mine2( edict_t *ent );
-void SP_info_null( edict_t *self );
-void SP_info_notnull( edict_t *self );
-void SP_path_corner( edict_t *self );
-
-void SP_misc_banner( edict_t *self );
-void SP_misc_teleporter( edict_t *self );
-void SP_misc_teleporter_dest( edict_t *self );
 
 spawn_t spawns[] = {
-	{"info_player_start", SP_info_player_start},
 	{"info_player_deathmatch", SP_info_player_deathmatch},
-	{"info_player_intermission", SP_info_player_intermission},
-
-	{"func_plat", SP_func_plat},
-	{"func_button", SP_func_button},
-	{"func_door", SP_func_door},
-	{"func_door_secret", SP_func_door_secret},
-	{"func_door_rotating", SP_func_door_rotating},
-	{"func_rotating", SP_func_rotating},
-	{"func_train", SP_func_train},
-	{"func_water", SP_func_water},
-	{"func_conveyor", SP_func_conveyor},
-	{"func_areaportal", SP_func_areaportal},
-	{"func_clock", SP_func_clock},
-	{"func_wall", SP_func_wall},
-	{"func_object", SP_func_object},
-	{"func_timer", SP_func_timer},
-	{"func_killbox", SP_func_killbox},
-
-	{"trigger_always", SP_trigger_always},
-	{"trigger_once", SP_trigger_once},
-	{"trigger_multiple", SP_trigger_multiple},
-	{"trigger_relay", SP_trigger_relay},
-	{"trigger_push", SP_trigger_push},
-	{"trigger_hurt", SP_trigger_hurt},
-	{"trigger_counter", SP_trigger_counter},
-	{"trigger_elevator", SP_trigger_elevator},
-	{"trigger_gravity", SP_trigger_gravity},
-
-	{"target_temp_entity", SP_target_temp_entity},
-	{"target_speaker", SP_target_speaker},
-	{"target_explosion", SP_target_explosion},
-	{"target_changelevel", SP_target_changelevel},
-	{"target_splash", SP_target_splash},
-	{"target_crosslevel_trigger", SP_target_crosslevel_trigger},
-	{"target_crosslevel_target", SP_target_crosslevel_target},
-	{"target_character", SP_target_character},
-	{"target_string", SP_target_string},
 
 	{"worldspawn", SP_worldspawn},
-	{"viewthing", SP_viewthing},
-
-	{"light_mine1", SP_light_mine1},
-	{"light_mine2", SP_light_mine2},
-	{"info_null", SP_info_null},
-	{"func_group", SP_info_null},
-	{"info_notnull", SP_info_notnull},
-	{"path_corner", SP_path_corner},
-
-	{"misc_banner", SP_misc_banner},
-	{"misc_teleporter", SP_misc_teleporter},
-	{"misc_teleporter_dest", SP_misc_teleporter_dest},
 
 	{NULL, NULL}
 };
@@ -387,20 +286,7 @@ void SpawnEntities( const char *mapname, char *entities, const char *spawnpoint 
 /* =================================================================== */
 
 char *dm_statusbar =
-    "yb	-24 "
-
-    /* timer */
-    "if 9 "
-    "	xv	246 "
-    "	num	2	10 "
-    "	xv	296 "
-    "	pic	9 "
-    "endif "
-
-    /*  frags */
-    "xr	-50 "
-    "yt 2 "
-    "num 2 14 "
+    ""
     ;
 
 /*QUAKED worldspawn (0 0 0) ?

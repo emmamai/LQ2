@@ -330,63 +330,6 @@ void SV_CalcViewOffset( edict_t *ent ) {
 	VectorCopy( v, ent->client->ps.viewoffset );
 }
 
-void SV_CalcGunOffset( edict_t *ent ) {
-	int i;
-	float delta;
-
-	if ( !ent ) {
-		return;
-	}
-
-	/* gun angles from bobbing */
-	ent->client->ps.gunangles[ROLL] = xyspeed * bobfracsin * 0.005;
-	ent->client->ps.gunangles[YAW] = xyspeed * bobfracsin * 0.01;
-
-	if ( bobcycle & 1 ) {
-		ent->client->ps.gunangles[ROLL] = -ent->client->ps.gunangles[ROLL];
-		ent->client->ps.gunangles[YAW] = -ent->client->ps.gunangles[YAW];
-	}
-
-	ent->client->ps.gunangles[PITCH] = xyspeed * bobfracsin * 0.005;
-
-	/* gun angles from delta movement */
-	for ( i = 0; i < 3; i++ ) {
-		delta = ent->client->oldviewangles[i] - ent->client->ps.viewangles[i];
-
-		if ( delta > 180 ) {
-			delta -= 360;
-		}
-
-		if ( delta < -180 ) {
-			delta += 360;
-		}
-
-		if ( delta > 45 ) {
-			delta = 45;
-		}
-
-		if ( delta < -45 ) {
-			delta = -45;
-		}
-
-		if ( i == YAW ) {
-			ent->client->ps.gunangles[ROLL] += 0.1 * delta;
-		}
-
-		ent->client->ps.gunangles[i] += 0.2 * delta;
-	}
-
-	/* gun height */
-	VectorClear( ent->client->ps.gunoffset );
-
-	/* gun_x / gun_y / gun_z are development tools */
-	for ( i = 0; i < 3; i++ ) {
-		ent->client->ps.gunoffset[i] += forward[i] * ( gun_y->value );
-		ent->client->ps.gunoffset[i] += right[i] * gun_x->value;
-		ent->client->ps.gunoffset[i] += up[i] * ( -gun_z->value );
-	}
-}
-
 void SV_AddBlend( float r, float g, float b, float a, float *v_blend ) {
 	float a2, a3;
 
@@ -526,135 +469,6 @@ void P_FallingDamage( edict_t *ent ) {
 	}
 }
 
-void P_WorldEffects( void ) {
-	int waterlevel, old_waterlevel;
-
-	if ( current_player->movetype == MOVETYPE_NOCLIP ) {
-		current_player->air_finished = level.time + 12; /* don't need air */
-		return;
-	}
-
-	waterlevel = current_player->waterlevel;
-	old_waterlevel = current_client->old_waterlevel;
-	current_client->old_waterlevel = waterlevel;
-
-	/* if just entered a water volume, play a sound */
-	if ( !old_waterlevel && waterlevel ) {
-		if ( current_player->watertype & CONTENTS_LAVA ) {
-			gi.sound( current_player, CHAN_BODY,
-			          gi.soundindex( "player/lava_in.wav" ), 1, ATTN_NORM, 0 );
-		} else if ( current_player->watertype & CONTENTS_SLIME ) {
-			gi.sound( current_player, CHAN_BODY,
-			          gi.soundindex( "player/watr_in.wav" ), 1, ATTN_NORM, 0 );
-		} else if ( current_player->watertype & CONTENTS_WATER ) {
-			gi.sound( current_player, CHAN_BODY,
-			          gi.soundindex( "player/watr_in.wav" ), 1, ATTN_NORM, 0 );
-		}
-
-		current_player->flags |= FL_INWATER;
-
-		/* clear damage_debounce, so the pain sound will play immediately */
-		current_player->damage_debounce_time = level.time - 1;
-	}
-
-	/* if just completely exited a water volume, play a sound */
-	if ( old_waterlevel && !waterlevel ) {
-		gi.sound( current_player, CHAN_BODY, gi.soundindex(
-		              "player/watr_out.wav" ), 1, ATTN_NORM, 0 );
-		current_player->flags &= ~FL_INWATER;
-	}
-
-	/* check for head just going underwater */
-	if ( ( old_waterlevel != 3 ) && ( waterlevel == 3 ) ) {
-		gi.sound( current_player, CHAN_BODY, gi.soundindex(
-		              "player/watr_un.wav" ), 1, ATTN_NORM, 0 );
-	}
-
-	/* check for head just coming out of water */
-	if ( ( old_waterlevel == 3 ) && ( waterlevel != 3 ) ) {
-		if ( current_player->air_finished < level.time ) {
-			/* gasp for air */
-			gi.sound( current_player, CHAN_VOICE,
-			          gi.soundindex( "player/gasp1.wav" ), 1, ATTN_NORM, 0 );
-		} else if ( current_player->air_finished < level.time + 11 ) {
-			/* just break surface */
-			gi.sound( current_player, CHAN_VOICE,
-			          gi.soundindex( "player/gasp2.wav" ), 1, ATTN_NORM, 0 );
-		}
-	}
-
-	/* check for drowning */
-	if ( waterlevel == 3 ) {
-		/* if out of air, start drowning */
-		if ( current_player->air_finished < level.time ) {
-			/* drown! */
-			if ( ( current_player->client->next_drown_time < level.time ) &&
-			        ( current_player->health > 0 ) ) {
-				current_player->client->next_drown_time = level.time + 1;
-
-				/* take more damage the longer underwater */
-				current_player->dmg += 2;
-
-				if ( current_player->dmg > 15 ) {
-					current_player->dmg = 15;
-				}
-
-				/* play a gurp sound instead of a normal pain sound */
-				if ( current_player->health <= current_player->dmg ) {
-					gi.sound( current_player, CHAN_VOICE,
-					          gi.soundindex( "player/drown1.wav" ), 1, ATTN_NORM, 0 );
-				} else if ( randk() & 1 ) {
-					gi.sound( current_player, CHAN_VOICE,
-					          gi.soundindex( "*gurp1.wav" ), 1, ATTN_NORM, 0 );
-				} else {
-					gi.sound( current_player, CHAN_VOICE,
-					          gi.soundindex( "*gurp2.wav" ), 1, ATTN_NORM, 0 );
-				}
-
-				current_player->pain_debounce_time = level.time;
-
-				T_Damage( current_player, world, world, vec3_origin,
-				          current_player->s.origin, vec3_origin,
-				          current_player->dmg, 0, 0,
-				          MOD_WATER );
-			}
-		}
-	} else {
-		current_player->air_finished = level.time + 12;
-		current_player->dmg = 2;
-	}
-
-	/* check for sizzle damage */
-	if ( waterlevel && ( current_player->watertype & ( CONTENTS_LAVA | CONTENTS_SLIME ) ) ) {
-		if ( current_player->watertype & CONTENTS_LAVA ) {
-			if ( ( current_player->health > 0 ) &&
-			        ( current_player->pain_debounce_time <= level.time ) &&
-			        ( current_client->invincible_framenum < level.framenum ) ) {
-				if ( randk() & 1 ) {
-					gi.sound( current_player, CHAN_VOICE,
-					          gi.soundindex( "player/burn1.wav" ), 1, ATTN_NORM, 0 );
-				} else {
-					gi.sound( current_player, CHAN_VOICE,
-					          gi.soundindex( "player/burn2.wav" ), 1, ATTN_NORM, 0 );
-				}
-
-				current_player->pain_debounce_time = level.time + 1;
-			}
-
-			T_Damage( current_player, world, world, vec3_origin,
-			          current_player->s.origin, vec3_origin,
-			          3 * waterlevel, 0, 0, MOD_LAVA );
-		}
-
-		if ( current_player->watertype & CONTENTS_SLIME ) {
-			/* no damage from slime with envirosuit */
-			T_Damage( current_player, world, world, vec3_origin,
-			          current_player->s.origin, vec3_origin,
-			          1 * waterlevel, 0, 0, MOD_SLIME );
-		}
-	}
-}
-
 void G_SetClientEffects( edict_t *ent ) {
 	int remaining;
 
@@ -697,18 +511,6 @@ void G_SetClientEvent( edict_t *ent ) {
 		if ( ( int )( current_client->bobtime + bobmove ) != bobcycle ) {
 			ent->s.event = EV_FOOTSTEP;
 		}
-	}
-}
-
-void G_SetClientSound( edict_t *ent ) {
-	if ( !ent ) {
-		return;
-	}
-
-	if ( ent->waterlevel && ( ent->watertype & ( CONTENTS_LAVA | CONTENTS_SLIME ) ) ) {
-		ent->s.sound = snd_fry;
-	} else {
-		ent->s.sound = 0;
 	}
 }
 
@@ -838,19 +640,7 @@ void ClientEndServerFrame( edict_t *ent ) {
 		current_client->ps.pmove.velocity[i] = ent->velocity[i] * 8.0;
 	}
 
-	/* If the end of unit layout is displayed, don't give
-	   the player any normal movement attributes */
-	if ( level.intermissiontime ) {
-		current_client->ps.blend[3] = 0;
-		current_client->ps.fov = 90;
-		G_SetStats( ent );
-		return;
-	}
-
 	AngleVectors( ent->client->v_angle, forward, right, up );
-
-	/* burn from lava, etc */
-	P_WorldEffects();
 
 	/* set model angles from view angles so other things in
 	   the world can tell which direction you are looking */
@@ -902,21 +692,14 @@ void ClientEndServerFrame( edict_t *ent ) {
 	/* determine the view offsets */
 	SV_CalcViewOffset( ent );
 
-	/* determine the gun offsets */
-	SV_CalcGunOffset( ent );
-
 	/* determine the full screen color blend
 	   must be after viewoffset, so eye contents
 	   can be accurately determined */
 	SV_CalcBlend( ent );
 
-	G_SetStats( ent );
-
 	G_SetClientEvent( ent );
 
 	G_SetClientEffects( ent );
-
-	G_SetClientSound( ent );
 
 	G_SetClientFrame( ent );
 
@@ -926,12 +709,4 @@ void ClientEndServerFrame( edict_t *ent ) {
 	/* clear weapon kicks */
 	VectorClear( ent->client->kick_origin );
 	VectorClear( ent->client->kick_angles );
-
-	if ( !( level.framenum & 31 ) ) {
-		/* if the scoreboard is up, update it */
-		if ( ent->client->showscores ) {
-			DeathmatchScoreboardMessage( ent, ent->enemy );
-			gi.unicast( ent, false );
-		}
-	}
 }

@@ -38,10 +38,6 @@ int meansOfDeath;
 edict_t *g_edicts;
 
 cvar_t *dmflags;
-cvar_t *fraglimit;
-cvar_t *timelimit;
-cvar_t *password;
-cvar_t *needpass;
 cvar_t *maxclients;
 cvar_t *maxentities;
 cvar_t *g_select_empty;
@@ -52,9 +48,6 @@ cvar_t *sv_gravity;
 
 cvar_t *sv_rollspeed;
 cvar_t *sv_rollangle;
-cvar_t *gun_x;
-cvar_t *gun_y;
-cvar_t *gun_z;
 
 cvar_t *run_pitch;
 cvar_t *run_roll;
@@ -190,154 +183,6 @@ edict_t * CreateTargetChangeLevel( char *map ) {
 }
 
 /*
- * The timelimit or fraglimit has been exceeded
- */
-void EndDMLevel( void ) {
-	edict_t *ent;
-	char *s, *t, *f;
-	static const char *seps = " ,\n\r";
-
-	/* stay on same level flag */
-	if ( ( int )dmflags->value & DF_SAME_LEVEL ) {
-		BeginIntermission( CreateTargetChangeLevel( level.mapname ) );
-		return;
-	}
-
-	/* see if it's in the map list */
-	if ( *sv_maplist->string ) {
-		s = strdup( sv_maplist->string );
-		f = NULL;
-		t = strtok( s, seps );
-
-		while ( t != NULL ) {
-			if ( Q_stricmp( t, level.mapname ) == 0 ) {
-				/* it's in the list, go to the next one */
-				t = strtok( NULL, seps );
-
-				if ( t == NULL ) { /* end of list, go to first one */
-					if ( f == NULL ) { /* there isn't a first one, same level */
-						BeginIntermission( CreateTargetChangeLevel( level.mapname ) );
-					} else {
-						BeginIntermission( CreateTargetChangeLevel( f ) );
-					}
-				} else {
-					BeginIntermission( CreateTargetChangeLevel( t ) );
-				}
-
-				free( s );
-				return;
-			}
-
-			if ( !f ) {
-				f = t;
-			}
-
-			t = strtok( NULL, seps );
-		}
-
-		free( s );
-	}
-
-	if ( level.nextmap[0] ) { /* go to a specific map */
-		BeginIntermission( CreateTargetChangeLevel( level.nextmap ) );
-	} else { /* search for a changelevel */
-		ent = G_Find( NULL, FOFS( classname ), "target_changelevel" );
-
-		if ( !ent ) {
-			/* the map designer didn't include a changelevel,
-			   so create a fake ent that goes back to the same level */
-			BeginIntermission( CreateTargetChangeLevel( level.mapname ) );
-			return;
-		}
-
-		BeginIntermission( ent );
-	}
-}
-
-void CheckNeedPass( void ) {
-	int need;
-
-	/* if password has changed, update needpass as needed */
-	if ( password->modified ) {
-		password->modified =  false;
-
-		need = 0;
-
-		if ( *password->string && Q_stricmp( password->string, "none" ) ) {
-			need |= 1;
-		}
-
-		gi.cvar_set( "needpass", va( "%d", need ) );
-	}
-}
-
-void CheckDMRules( void ) {
-	int i;
-	gclient_t *cl;
-
-	if ( level.intermissiontime ) {
-		gi.cprintf( NULL, PRINT_HIGH, "Returning - in intermission\n" );
-		return;
-	}
-
-	if ( timelimit->value ) {
-		if ( level.time == 5.f * 60 ) {
-			gi.bprintf( PRINT_HIGH, "Five minute warning." );
-		} else if ( level.time == 1.f * 60 ) {
-			gi.bprintf( PRINT_HIGH, "One minute warning." );
-		} else if ( level.time >= timelimit->value * 60 ) {
-			gi.bprintf( PRINT_HIGH, "Timelimit hit.\n" );
-			EndDMLevel();
-			return;
-		}
-	}
-
-	if ( fraglimit->value ) {
-		for ( i = 0; i < maxclients->value; i++ ) {
-			cl = game.clients + i;
-
-			if ( !g_edicts[i + 1].inuse ) {
-				continue;
-			}
-
-			if ( cl->resp.score >= fraglimit->value ) {
-				gi.bprintf( PRINT_HIGH, "Fraglimit hit.\n" );
-				EndDMLevel();
-				return;
-			}
-		}
-	} else {
-		gi.cprintf( NULL, PRINT_HIGH, "Fraglimit not set\n" );
-	}
-}
-
-void ExitLevel( void ) {
-	int i;
-	edict_t *ent;
-	char command[256];
-
-	Com_sprintf( command, sizeof( command ), "gamemap \"%s\"\n", level.changemap );
-	gi.AddCommandString( command );
-	level.changemap = NULL;
-	level.exitintermission = 0;
-	level.intermissiontime = 0;
-	ClientEndServerFrames();
-
-	/* clear some things before going to next level */
-	for ( i = 0; i < maxclients->value; i++ ) {
-		ent = g_edicts + 1 + i;
-
-		if ( !ent->inuse ) {
-			continue;
-		}
-
-		if ( ent->health > ent->client->pers.max_health ) {
-			ent->health = ent->client->pers.max_health;
-		}
-	}
-}
-
-/*
  * Advances the world by 0.1 seconds
  */
 void G_RunFrame( void ) {
@@ -346,12 +191,6 @@ void G_RunFrame( void ) {
 
 	level.framenum++;
 	level.time = level.framenum * FRAMETIME;
-
-	/* exit intermissions */
-	if ( level.exitintermission ) {
-		ExitLevel();
-		return;
-	}
 
 	/* treat each object in turn
 	   even the world gets a chance
@@ -380,12 +219,6 @@ void G_RunFrame( void ) {
 
 		G_RunEntity( ent );
 	}
-
-	/* see if it is time to end a deathmatch */
-	CheckDMRules();
-
-	/* see if needpass needs updated */
-	CheckNeedPass();
 
 	/* build the playerstate_t structures for all players */
 	ClientEndServerFrames();

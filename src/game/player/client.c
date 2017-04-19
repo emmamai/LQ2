@@ -31,13 +31,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo );
 void SP_misc_teleporter_dest( edict_t *ent );
 
 /*
- * QUAKED info_player_start (1 0 0) (-16 -16 -24) (16 16 32)
- * The normal starting point for a level.
- */
-void SP_info_player_start( edict_t *self ) {
-}
-
-/*
  * QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32)
  * potential spawning position for deathmatch games
  */
@@ -46,16 +39,12 @@ void SP_info_player_deathmatch( edict_t *self ) {
 		return;
 	}
 
-	SP_misc_teleporter_dest( self );
-}
-
-/*
- * QUAKED info_player_intermission (1 0 1) (-16 -16 -24) (16 16 32)
- * The deathmatch intermission point will be at one of these
- * Use 'angles' instead of 'angle', so you can set pitch or
- * roll as well as yaw.  'pitch yaw roll'
- */
-void SP_info_player_intermission( void ) {
+	gi.setmodel( self, "models/objects/dmspot/tris.md2" );
+	self->s.skinnum = 0;
+	self->solid = SOLID_BBOX;
+	VectorSet( self->mins, -32, -32, -24 );
+	VectorSet( self->maxs, 32, 32, -16 );
+	gi.linkentity( self );
 }
 
 /* ======================================================================= */
@@ -63,201 +52,38 @@ void SP_info_player_intermission( void ) {
 void player_pain( edict_t *self, edict_t *other,float kick, int damage ) {
 }
 
-qboolean IsFemale( edict_t *ent ) {
-	char *info;
+void ThrowClientHead( edict_t *self, int damage ) {
+	vec3_t vd;
 
-	if ( !ent ) {
-		return false;
-	}
-
-	if ( !ent->client ) {
-		return false;
-	}
-
-	info = Info_ValueForKey( ent->client->pers.userinfo, "gender" );
-
-	if ( strstr( info, "crakhor" ) ) {
-		return true;
-	}
-
-	if ( ( info[0] == 'f' ) || ( info[0] == 'F' ) ) {
-		return true;
-	}
-
-	return false;
-}
-
-qboolean IsNeutral( edict_t *ent ) {
-	char *info;
-
-	if ( !ent ) {
-		return false;
-	}
-
-	if ( !ent->client ) {
-		return false;
-	}
-
-	info = Info_ValueForKey( ent->client->pers.userinfo, "gender" );
-
-	if ( strstr( info, "crakhor" ) ) {
-		return false;
-	}
-
-	if ( ( info[0] != 'f' ) && ( info[0] != 'F' ) && ( info[0] != 'm' ) && ( info[0] != 'M' ) ) {
-		return true;
-	}
-
-	return false;
-}
-
-void ClientObituary( edict_t *self, edict_t *inflictor /* unused */, edict_t *attacker ) {
-	int mod;
-	int left;
-	char *message;
-	char *message2;
-	qboolean ff;
-
-	if ( !self || !inflictor ) {
+	if ( !self ) {
 		return;
 	}
 
-	ff = meansOfDeath & MOD_FRIENDLY_FIRE;
-	mod = meansOfDeath & ~MOD_FRIENDLY_FIRE;
-	message = NULL;
-	message2 = "";
+	self->s.origin[2] += 32;
+	self->s.frame = 0;
+	gi.setmodel( self, "" );
+	VectorSet( self->mins, -16, -16, 0 );
+	VectorSet( self->maxs, 16, 16, 16 );
 
-	switch ( mod ) {
-	case MOD_SUICIDE:
-		message = "suicides";
-		break;
-	case MOD_FALLING:
-		message = "cratered";
-		break;
-	case MOD_CRUSH:
-		message = "was squished";
-		break;
-	case MOD_WATER:
-		message = "sank like a rock";
-		break;
-	case MOD_SLIME:
-		message = "melted";
-		break;
-	case MOD_LAVA:
-		message = "does a back flip into the lava";
-		break;
-	case MOD_EXPLOSIVE:
-	case MOD_BARREL:
-		message = "blew up";
-		break;
-	case MOD_EXIT:
-		message = "found a way out";
-		break;
-	case MOD_TARGET_LASER:
-		message = "saw the light";
-		break;
-	case MOD_TARGET_BLASTER:
-		message = "got blasted";
-		break;
-	case MOD_BOMB:
-	case MOD_SPLASH:
-	case MOD_TRIGGER_HURT:
-		message = "was in the wrong place";
-		break;
-	}
+	self->takedamage = DAMAGE_NO;
+	self->solid = SOLID_BBOX;
+	self->s.effects = 0;
+	self->s.sound = 0;
+	self->flags |= FL_NO_KNOCKBACK;
 
-	if ( attacker == self ) {
-		if ( IsNeutral( self ) ) {
-			message = "killed itself";
-		} else if ( IsFemale( self ) ) {
-			message = "killed herself";
-		} else {
-			message = "killed himself";
-		}
-	}
+	self->movetype = MOVETYPE_BOUNCE;
 
-	if ( message ) {
-		gi.bprintf( PRINT_MEDIUM, "%s %s.\n",
-		            self->client->pers.netname,
-		            message );
-
-		self->client->resp.score--;
-
-		self->enemy = NULL;
-		return;
-	}
-
-	self->enemy = attacker;
-
-	if ( attacker && attacker->client ) {
-		switch ( mod ) {
-		case MOD_RAILGUN:
-			message = "was railed by";
-			break;
-		case MOD_TELEFRAG:
-			message = "tried to invade";
-			message2 = "'s personal space";
-			break;
-		}
-
-		if ( message ) {
-			gi.bprintf( PRINT_MEDIUM, "%s %s %s%s\n",
-			            self->client->pers.netname,
-			            message, attacker->client->pers.netname,
-			            message2 );
-
-			if ( ff ) {
-				attacker->client->resp.score--;
-			} else {
-				attacker->client->resp.score++;
-				if ( ( left = (int) fraglimit->value - ++attacker->client->resp.score ) <= 3 ) {
-					if ( left == 1 ) {
-						gi.bprintf( PRINT_HIGH, "%i frag left\n", left );
-					} else {
-						gi.bprintf( PRINT_HIGH, "%i frags left\n", left );
-					}
-				}
-			}
-			return;
-		}
-	}
-
-	gi.bprintf( PRINT_MEDIUM, "%s died.\n", self->client->pers.netname );
-	self->client->resp.score--;
-}
-
-void LookAtKiller( edict_t *self, edict_t *inflictor, edict_t *attacker ) {
-	vec3_t dir;
-
-	if ( !self || !inflictor || !attacker ) {
-		return;
-	}
-
-	if ( attacker && ( attacker != world ) && ( attacker != self ) ) {
-		VectorSubtract( attacker->s.origin, self->s.origin, dir );
-	} else if ( inflictor && ( inflictor != world ) && ( inflictor != self ) ) {
-		VectorSubtract( inflictor->s.origin, self->s.origin, dir );
+	if ( self->client ) { /* bodies in the queue don't have a client anymore */
+		self->client->anim_priority = ANIM_DEATH;
+		self->client->anim_end = self->s.frame;
 	} else {
-		self->client->killer_yaw = self->s.angles[YAW];
-		return;
+		self->think = NULL;
+		self->nextthink = 0;
 	}
 
-	if ( dir[0] ) {
-		self->client->killer_yaw = 180 / M_PI *atan2( dir[1], dir[0] );
-	} else {
-		self->client->killer_yaw = 0;
-
-		if ( dir[1] > 0 ) {
-			self->client->killer_yaw = 90;
-		} else if ( dir[1] < 0 ) {
-			self->client->killer_yaw = -90;
-		}
-	}
-
-	if ( self->client->killer_yaw < 0 ) {
-		self->client->killer_yaw += 360;
-	}
+	gi.linkentity( self );
 }
+
 
 void player_die( edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point /* unused */ ) {
 	if ( !self || !inflictor || !attacker ) {
@@ -287,11 +113,8 @@ void player_die( edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 	if ( !self->deadflag ) {
 		self->client->respawn_time = level.time + 1.0;
-		LookAtKiller( self, inflictor, attacker );
 		self->client->ps.pmove.pm_type = PM_DEAD;
-		ClientObituary( self, inflictor, attacker );
-
-		Cmd_Score_f( self ); /* show scores */
+		gi.bprintf( PRINT_MEDIUM, "%s died.\n", self->client->pers.netname );
 	}
 
 	/* remove powerups */
@@ -681,23 +504,6 @@ void PutClientInServer( edict_t *ent ) {
 	}
 
 	gi.linkentity( ent );
-
-	/* force the current weapon up */
-	client->newweapon = client->pers.weapon;
-	ChangeWeapon( ent );
-}
-
-/*
- * A client has just connected to the server in
- * deathmatch mode, so clear everything out before
- * starting them.
- */
-void ClientBeginDeathmatch( edict_t *ent ) {
-	if ( !ent ) {
-		return;
-	}
-
-
 }
 
 /*
@@ -718,15 +524,11 @@ void ClientBegin( edict_t *ent ) {
 	/* locate ent at a spawn point */
 	PutClientInServer( ent );
 
-	if ( level.intermissiontime ) {
-		MoveClientToIntermission( ent );
-	} else {
-		/* send effect */
-		gi.WriteByte( svc_muzzleflash );
-		gi.WriteShort( ent - g_edicts );
-		gi.WriteByte( MZ_LOGIN );
-		gi.multicast( ent->s.origin, MULTICAST_PVS );
-	}
+	/* send effect */
+	gi.WriteByte( svc_muzzleflash );
+	gi.WriteShort( ent - g_edicts );
+	gi.WriteByte( MZ_LOGIN );
+	gi.multicast( ent->s.origin, MULTICAST_PVS );
 
 	gi.bprintf( PRINT_HIGH, "%s entered the game\n", ent->client->pers.netname );
 
@@ -800,14 +602,6 @@ qboolean ClientConnect( edict_t *ent, char *userinfo ) {
 	char *value;
 
 	if ( !ent || !userinfo ) {
-		return false;
-	}
-
-	/* check for a password */
-	value = Info_ValueForKey( userinfo, "password" );
-
-	if ( *password->string && strcmp( password->string, "none" ) && strcmp( password->string, value ) ) {
-		Info_SetValueForKey( userinfo, "rejmsg", "Password required or incorrect." );
 		return false;
 	}
 
@@ -1053,14 +847,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd ) {
 	/* save light level the player is standing
 	   on for monster sighting AI */
 	ent->light_level = ucmd->lightlevel;
-
-	/* fire weapon from final position if needed */
-	if ( client->latched_buttons & BUTTON_ATTACK ) {
-		if ( !client->weapon_thunk ) {
-			client->weapon_thunk = true;
-			Think_Weapon( ent );
-		}
-	}
 }
 
 /*
@@ -1081,13 +867,6 @@ void ClientBeginServerFrame( edict_t *ent ) {
 	}
 
 	client = ent->client;
-
-	/* run weapon animations if it hasn't been done by a ucmd_t */
-	if ( !client->weapon_thunk ) {
-		Think_Weapon( ent );
-	} else {
-		client->weapon_thunk = false;
-	}
 
 	if ( ent->deadflag ) {
 		/* wait for any button just going down */

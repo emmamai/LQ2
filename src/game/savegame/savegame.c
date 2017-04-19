@@ -137,9 +137,6 @@ field_t fields[] = {
 void InitGame( void ) {
 	gi.dprintf( "InitGame: %s built on %s.\n", GAMEVERSION, BUILD_DATE );
 
-	gun_x = gi.cvar( "gun_x", "0", 0 );
-	gun_y = gi.cvar( "gun_y", "0", 0 );
-	gun_z = gi.cvar( "gun_z", "0", 0 );
 	sv_rollspeed = gi.cvar( "sv_rollspeed", "200", 0 );
 	sv_rollangle = gi.cvar( "sv_rollangle", "2", 0 );
 	sv_maxvelocity = gi.cvar( "sv_maxvelocity", "2000", 0 );
@@ -157,10 +154,6 @@ void InitGame( void ) {
 
 	/* change anytime vars */
 	dmflags = gi.cvar( "dmflags", "0", CVAR_SERVERINFO );
-	fraglimit = gi.cvar( "fraglimit", "0", CVAR_SERVERINFO );
-	timelimit = gi.cvar( "timelimit", "0", CVAR_SERVERINFO );
-	password = gi.cvar( "password", "", CVAR_USERINFO );
-	needpass = gi.cvar( "needpass", "0", CVAR_SERVERINFO );
 	g_select_empty = gi.cvar( "g_select_empty", "0", CVAR_ARCHIVE );
 	run_pitch = gi.cvar( "run_pitch", "0.002", 0 );
 	run_roll = gi.cvar( "run_roll", "0.005", 0 );

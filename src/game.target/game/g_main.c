@@ -41,10 +41,8 @@ cvar_t *dmflags;
 cvar_t *fraglimit;
 cvar_t *timelimit;
 cvar_t *password;
-cvar_t *spectator_password;
 cvar_t *needpass;
 cvar_t *maxclients;
-cvar_t *maxspectators;
 cvar_t *maxentities;
 cvar_t *g_select_empty;
 cvar_t *dedicated;
@@ -65,10 +63,6 @@ cvar_t *bob_pitch;
 cvar_t *bob_roll;
 
 cvar_t *sv_cheats;
-
-cvar_t *flood_msgs;
-cvar_t *flood_persecond;
-cvar_t *flood_waitdelay;
 
 cvar_t *sv_maplist;
 
@@ -263,20 +257,14 @@ void EndDMLevel( void ) {
 void CheckNeedPass( void ) {
 	int need;
 
-	/* if password or spectator_password has
-	   changed, update needpass as needed */
-	if ( password->modified || spectator_password->modified ) {
-		password->modified = spectator_password->modified = false;
+	/* if password has changed, update needpass as needed */
+	if ( password->modified ) {
+		password->modified =  false;
 
 		need = 0;
 
 		if ( *password->string && Q_stricmp( password->string, "none" ) ) {
 			need |= 1;
-		}
-
-		if ( *spectator_password->string &&
-		        Q_stricmp( spectator_password->string, "none" ) ) {
-			need |= 2;
 		}
 
 		gi.cvar_set( "needpass", va( "%d", need ) );
@@ -288,11 +276,16 @@ void CheckDMRules( void ) {
 	gclient_t *cl;
 
 	if ( level.intermissiontime ) {
+		gi.cprintf( NULL, PRINT_HIGH, "Returning - in intermission\n" );
 		return;
 	}
 
 	if ( timelimit->value ) {
-		if ( level.time >= timelimit->value * 60 ) {
+		if ( level.time == 5.f * 60 ) {
+			gi.bprintf( PRINT_HIGH, "Five minute warning." );
+		} else if ( level.time == 1.f * 60 ) {
+			gi.bprintf( PRINT_HIGH, "One minute warning." );
+		} else if ( level.time >= timelimit->value * 60 ) {
 			gi.bprintf( PRINT_HIGH, "Timelimit hit.\n" );
 			EndDMLevel();
 			return;
@@ -313,6 +306,8 @@ void CheckDMRules( void ) {
 				return;
 			}
 		}
+	} else {
+		gi.cprintf( NULL, PRINT_HIGH, "Fraglimit not set\n" );
 	}
 }
 

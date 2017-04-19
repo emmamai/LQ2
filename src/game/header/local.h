@@ -255,17 +255,12 @@ extern cvar_t *maxentities;
 extern cvar_t *deathmatch;
 extern cvar_t *dmflags;
 extern cvar_t *skill;
-extern cvar_t *fraglimit;
-extern cvar_t *timelimit;
-extern cvar_t *password;
-extern cvar_t *needpass;
 extern cvar_t *g_select_empty;
 extern cvar_t *dedicated;
 
 extern cvar_t *sv_gravity;
 extern cvar_t *sv_maxvelocity;
 
-extern cvar_t *gun_x, *gun_y, *gun_z;
 extern cvar_t *sv_rollspeed;
 extern cvar_t *sv_rollangle;
 
@@ -343,11 +338,6 @@ char *vtos( vec3_t v );
 
 float vectoyaw( vec3_t vec );
 
-/* g_combat.c */
-void T_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker,
-               vec3_t dir, vec3_t point, vec3_t normal, int damage,
-               int knockback, int dflags, int mod );
-
 /* damage flags */
 #define DAMAGE_NO_KNOCKBACK 0x00000001 /* do not affect velocity, just view angles */
 #define DAMAGE_NO_PROTECTION 0x0000002 /* armor, shields, invulnerability, and godmode have no effect */
@@ -357,7 +347,6 @@ void ThrowClientHead( edict_t *self, int damage );
 
 /* g_client.c */
 void respawn( edict_t *ent );
-void BeginIntermission( edict_t *targ );
 void PutClientInServer( edict_t *ent );
 void InitClientPersistant( gclient_t *client );
 void InitClientResp( gclient_t *client );
@@ -373,11 +362,6 @@ void ServerCommand( void );
 
 /* p_view.c */
 void ClientEndServerFrame( edict_t *ent );
-
-/* p_hud.c */
-void MoveClientToIntermission( edict_t *client );
-void G_SetStats( edict_t *ent );
-void DeathmatchScoreboardMessage( edict_t *client, edict_t *killer );
 
 /* g_phys.c */
 void G_RunEntity( edict_t *ent );

@@ -81,21 +81,6 @@ void Cmd_Noclip_f( edict_t *ent ) {
 	gi.cprintf( ent, PRINT_HIGH, msg );
 }
 
-void Cmd_Score_f( edict_t *ent ) {
-	if ( !ent ) {
-		return;
-	}
-
-	if ( ent->client->showscores ) {
-		ent->client->showscores = false;
-		return;
-	}
-
-	ent->client->showscores = true;
-	DeathmatchScoreboardMessage( ent, ent->enemy );
-	gi.unicast( ent, true );
-}
-
 void Cmd_Kill_f( edict_t *ent ) {
 	if ( !ent ) {
 		return;
@@ -109,73 +94,6 @@ void Cmd_Kill_f( edict_t *ent ) {
 	ent->health = 0;
 	meansOfDeath = MOD_SUICIDE;
 	player_die( ent, ent, ent, 100000, vec3_origin );
-}
-
-int PlayerSort( void const *a, void const *b ) {
-	int anum, bnum;
-
-	if ( !a || !b ) {
-		return 0;
-	}
-
-	anum = *( int * )a;
-	bnum = *( int * )b;
-
-	anum = game.clients[anum].ps.stats[STAT_FRAGS];
-	bnum = game.clients[bnum].ps.stats[STAT_FRAGS];
-
-	if ( anum < bnum ) {
-		return -1;
-	}
-
-	if ( anum > bnum ) {
-		return 1;
-	}
-
-	return 0;
-}
-
-void Cmd_Players_f( edict_t *ent ) {
-	int i;
-	int count;
-	char small[64];
-	char large[1280];
-	int index[256];
-
-	if ( !ent ) {
-		return;
-	}
-
-	count = 0;
-
-	for ( i = 0; i < maxclients->value; i++ ) {
-		if ( game.clients[i].pers.connected ) {
-			index[count] = i;
-			count++;
-		}
-	}
-
-	/* sort by frags */
-	qsort( index, count, sizeof( index[0] ), PlayerSort );
-
-	/* print information */
-	large[0] = 0;
-
-	for ( i = 0; i < count; i++ ) {
-		Com_sprintf( small, sizeof( small ), "%3i %s\n",
-		             game.clients[index[i]].ps.stats[STAT_FRAGS],
-		             game.clients[index[i]].pers.netname );
-
-		if ( strlen( small ) + strlen( large ) > sizeof( large ) - 100 ) {
-			/* can't print all of them in one packet */
-			strcat( large, "...\n" );
-			break;
-		}
-
-		strcat( large, small );
-	}
-
-	gi.cprintf( ent, PRINT_HIGH, "%s\n%i players\n", large, count );
 }
 
 void Cmd_Say_f( edict_t *ent, qboolean arg0 ) {
@@ -287,19 +205,10 @@ void ClientCommand( edict_t *ent ) {
 	cmd = gi.argv( 0 );
 
 	if ( Q_stricmp( cmd, "players" ) == 0 ) {
-		Cmd_Players_f( ent );
+		Cmd_PlayerList_f( ent );
 		return;
 	} else if ( Q_stricmp( cmd, "say" ) == 0 ) {
 		Cmd_Say_f( ent, false );
-		return;
-	} else if ( Q_stricmp( cmd, "score" ) == 0 ) {
-		Cmd_Score_f( ent );
-		return;
-	} else if ( Q_stricmp( cmd, "help" ) == 0 ) {
-		Cmd_Score_f( ent );
-		return;
-	} else if ( Q_stricmp( cmd, "inven" ) == 0 ) {
-		Cmd_Score_f( ent );
 		return;
 	}
 
